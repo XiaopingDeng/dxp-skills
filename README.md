@@ -24,6 +24,7 @@
 | 技能名称 | 分类 | 说明 |
 |----------|------|------|
 | **dxp-thesis-reviewer** | `teaching/` | 本科毕业论文审核与批注：自动体检报告 + OOXML 批注写入，支持 .doc/.docx |
+| **dxp-syllabus-creator** | `teaching/` | 高校课程教学大纲智能编制：理论课/课程设计/实习实训/毕设四类模板，支持导出格式合规的 .docx |
 
 更多技能正在开发中。分类目录：
 
@@ -223,6 +224,7 @@ npx skills add .
 
 # 或注册单个技能
 npx skills add ./teaching/dxp-thesis-reviewer
+npx skills add ./teaching/dxp-syllabus-creator
 ```
 
 ### 查看已注册技能
@@ -240,6 +242,13 @@ npx skills list
 /dxp-thesis-reviewer 评审该文件夹下的论文xxxx.docx
 ```
 过程中需要多次授权，最终会在本地目录下生成加入了批注的评审版本word文件
+
+大纲编制也同理：
+
+```bash
+# 按培养方案生成某课程的教学大纲
+/dxp-syllabus-creator 专业: 机械工程，课程: 机械原理，按该文件夹下的培养方案.docx编写教学大纲
+```
 
 可以基于评审过程和需求采用 `/skill-creator`（该 Skill 可从 GitHub 仓库一键安装）进行个性化定制迭代，例如:
 ```bash
@@ -262,12 +271,13 @@ CC Switch 还支持统一管理 Skills：
 - 在 CC Switch 的 **「Skills」** 标签页中，可从 GitHub 仓库一键安装社区 Skills（如 `/skill-creator`）
 - 也支持从本地 ZIP 文件导入自定义 Skill
 - 安装后在 Claude Code 中即可自动生效，无需额外配置
-- 也可将 `dxp-thesis-reviewer` 文件夹放到 Claude Code 的 Skill 目录下（通常位于 `C:\Users\admin\.claude\skills`）
+- 也可将技能文件夹放到 Claude Code 的 Skill 目录下（通常位于 `C:\Users\admin\.claude\skills`）
 
 ### 移除技能
 
 ```bash
 npx skills remove dxp-thesis-reviewer
+npx skills remove dxp-syllabus-creator
 ```
 
 ## 仓库结构
@@ -278,20 +288,32 @@ dxp-skills/
 │   ├── ISSUE_TEMPLATE.zh-CN.md
 │   └── PULL_REQUEST_TEMPLATE.zh-CN.md
 ├── teaching/                        # 教学相关技能
-│   └── dxp-thesis-reviewer/         # 本科毕业论文审核与批注
+│   ├── dxp-thesis-reviewer/         # 本科毕业论文审核与批注
+│   │   ├── SKILL.md                 # 技能定义文件
+│   │   └── scripts/                 # 配套脚本
+│   │       ├── analyze_thesis.py    # 论文综合分析
+│   │       ├── append_summary.py    # 追加红色总结
+│   │       ├── batch_comment.py     # 批量写入批注
+│   │       ├── convert_doc_to_docx.py # .doc → .docx 转换
+│   │       ├── extract_structure.py # 提取文档结构
+│   │       ├── extract_styles.py    # 提取文档样式
+│   │       ├── find_paragraphs.py   # 查找特定段落
+│   │       ├── pack_docx.py         # 重新打包 .docx
+│   │       ├── unpack_docx.py       # 解包 .docx
+│   │       ├── validate_keywords.py # 预验证关键词
+│   │       └── verify_comments.py   # 验证批注完整性
+│   └── dxp-syllabus-creator/        # 高校课程教学大纲智能编制
 │       ├── SKILL.md                 # 技能定义文件
-│       └── scripts/                 # 配套脚本
-│           ├── analyze_thesis.py    # 论文综合分析
-│           ├── append_summary.py    # 追加红色总结
-│           ├── batch_comment.py     # 批量写入批注
-│           ├── convert_doc_to_docx.py # .doc → .docx 转换
-│           ├── extract_structure.py # 提取文档结构
-│           ├── extract_styles.py    # 提取文档样式
-│           ├── find_paragraphs.py   # 查找特定段落
-│           ├── pack_docx.py         # 重新打包 .docx
-│           ├── unpack_docx.py       # 解包 .docx
-│           ├── validate_keywords.py # 预验证关键词
-│           └── verify_comments.py   # 验证批注完整性
+│       ├── dxp-syllabus-creator.skill # 技能包文件
+│       ├── scripts/
+│       │   └── generate_syllabus_docx.py # 生成合规 .docx 大纲
+│       ├── references/
+│       │   └── 培养方案指导.md       # 培养方案编制参考资料
+│       ├── 1. 理论课程教学大纲的格式.docx  # 理论课模板
+│       ├── 2. 课程设计教学大纲的格式.docx  # 课程设计模板
+│       ├── 3. 实习教学大纲的格式.docx      # 实习实训模板
+│       ├── 5. 毕业论文（设计）教学大纲的格式.docx # 毕设模板
+│       └── eval_set.json            # 评测数据集
 ├── .gitignore
 ├── LICENSE
 ├── README.md

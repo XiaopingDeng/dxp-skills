@@ -24,6 +24,7 @@ A personal Skills repository covering thesis review, code development, teaching,
 | Skill | Category | Description |
 |-------|----------|-------------|
 | **dxp-thesis-reviewer** | `teaching/` | Undergrad thesis review & annotation: auto health-check report + OOXML comment injection, supports .doc/.docx |
+| **dxp-syllabus-creator** | `teaching/` | University syllabus/course outline intelligent generator: 4 templates (theory/design/internship/thesis), exports compliant .docx |
 
 More skills are in development. Categories:
 
@@ -223,6 +224,7 @@ npx skills add .
 
 # Or register a single skill
 npx skills add ./teaching/dxp-thesis-reviewer
+npx skills add ./teaching/dxp-syllabus-creator
 ```
 
 ### List Registered Skills
@@ -241,6 +243,13 @@ In the Opencode (or Claude Code) interactive interface, trigger a skill via slas
 ```
 
 The process requires multiple authorizations along the way. When finished, a reviewed version of the Word document with comments embedded will be generated in the local directory.
+
+For syllabus generation:
+
+```bash
+# Generate a course syllabus based on a training plan
+/dxp-syllabus-creator Major: Mechanical Engineering, Course: Mechanical Principles, write the syllabus based on the training plan.docx in this folder
+```
 
 You can iterate on and customize `/dxp-thesis-reviewer` using `/skill-creator` (installable from GitHub community repos with one click). For example:
 
@@ -264,12 +273,13 @@ CC Switch also provides unified Skills management:
 - In the **"Skills"** tab of CC Switch, install community Skills (e.g., `/skill-creator`) from GitHub repos with one click
 - Import custom Skills from local ZIP files
 - Skills take effect in Claude Code immediately — no extra configuration needed
-- You can also copy the `dxp-thesis-reviewer` folder into Claude Code's skills directory (typically located at `C:\Users\admin\.claude\skills`)
+- You can also copy skill folders into Claude Code's skills directory (typically located at `C:\Users\admin\.claude\skills`)
 
 ### Remove a Skill
 
 ```bash
 npx skills remove dxp-thesis-reviewer
+npx skills remove dxp-syllabus-creator
 ```
 
 ## Repository Structure
@@ -280,20 +290,32 @@ dxp-skills/
 │   ├── ISSUE_TEMPLATE.zh-CN.md
 │   └── PULL_REQUEST_TEMPLATE.zh-CN.md
 ├── teaching/                        # Teaching-related skills
-│   └── dxp-thesis-reviewer/         # Undergrad thesis review & annotation
+│   ├── dxp-thesis-reviewer/         # Undergrad thesis review & annotation
+│   │   ├── SKILL.md                 # Skill definition
+│   │   └── scripts/                 # Supporting scripts
+│   │       ├── analyze_thesis.py    # Comprehensive thesis analysis
+│   │       ├── append_summary.py    # Append red summary
+│   │       ├── batch_comment.py     # Batch comment injection
+│   │       ├── convert_doc_to_docx.py # .doc → .docx conversion
+│   │       ├── extract_structure.py # Extract document structure
+│   │       ├── extract_styles.py    # Extract document styles
+│   │       ├── find_paragraphs.py   # Find specific paragraphs
+│   │       ├── pack_docx.py         # Re-pack .docx
+│   │       ├── unpack_docx.py       # Unpack .docx
+│   │       ├── validate_keywords.py # Pre-validate keywords
+│   │       └── verify_comments.py   # Verify comment integrity
+│   └── dxp-syllabus-creator/        # University syllabus generator
 │       ├── SKILL.md                 # Skill definition
-│       └── scripts/                 # Supporting scripts
-│           ├── analyze_thesis.py    # Comprehensive thesis analysis
-│           ├── append_summary.py    # Append red summary
-│           ├── batch_comment.py     # Batch comment injection
-│           ├── convert_doc_to_docx.py # .doc → .docx conversion
-│           ├── extract_structure.py # Extract document structure
-│           ├── extract_styles.py    # Extract document styles
-│           ├── find_paragraphs.py   # Find specific paragraphs
-│           ├── pack_docx.py         # Re-pack .docx
-│           ├── unpack_docx.py       # Unpack .docx
-│           ├── validate_keywords.py # Pre-validate keywords
-│           └── verify_comments.py   # Verify comment integrity
+│       ├── dxp-syllabus-creator.skill # Skill package file
+│       ├── scripts/
+│       │   └── generate_syllabus_docx.py # Generate compliant .docx syllabus
+│       ├── references/
+│       │   └── 培养方案指导.md       # Training plan guidance reference
+│       ├── 1. 理论课程教学大纲的格式.docx  # Theory course template
+│       ├── 2. 课程设计教学大纲的格式.docx  # Course design template
+│       ├── 3. 实习教学大纲的格式.docx      # Internship template
+│       ├── 5. 毕业论文（设计）教学大纲的格式.docx # Thesis template
+│       └── eval_set.json            # Evaluation dataset
 ├── .gitignore
 ├── LICENSE
 ├── README.md
