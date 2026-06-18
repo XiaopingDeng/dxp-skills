@@ -1,14 +1,14 @@
 # dxp-skills
 
-A personal Skills repository covering thesis review, code development, teaching, and research scenarios. Supports one-click API Provider switching via **CC Switch**, powered by **DeepSeek V4**.
+A personal Skills repository covering thesis review, code development, teaching, and research scenarios. **Opencode** (free models, open ecosystem) is recommended as the primary driver; also supports one-click API Provider switching via **CC Switch** to use **DeepSeek V4**.
 
 ## Table of Contents
 
 - [Skills](#skills)
 - [Environment Setup](#environment-setup)
   - [Prerequisites](#prerequisites)
-  - [Step 1: Install Node.js & npm](#step-1-install-nodejs--npm)
-  - [Step 2: Install Claude Code](#step-2-install-claude-code)
+   - [Step 1: Install Node.js & npm](#step-1-install-nodejs--npm)
+   - [Step 2: Install AI Tools (Recommended: Opencode, Optional: Claude Code)](#step-2-install-ai-tools-recommended-opencode-optional-claude-code)
   - [Step 3: Get DeepSeek API Key](#step-3-get-deepseek-api-key)
   - [Step 4: Install & Configure CC Switch](#step-4-install--configure-cc-switch)
   - [Step 5: Verify & Use](#step-5-verify--use)
@@ -33,7 +33,7 @@ More skills are in development. Categories:
 
 ## Environment Setup
 
-> 🚀 This guide is tailored for **Windows 11**. It uses **CC Switch** to swap the API Provider to **DeepSeek V4** with a single click — no manual editing of environment variables or config files.
+> 🚀 This guide is tailored for **Windows 11**. **Opencode** is recommended (free built-in models, ready to use out of the box); alternatively, use **CC Switch** to swap the API Provider to **DeepSeek V4** for Claude Code.
 
 ### Prerequisites
 
@@ -41,10 +41,10 @@ More skills are in development. Categories:
 |------|-------------|-------|
 | OS | Windows 11 (22H2+) | WSL2 recommended (optional) |
 | Node.js | ≥ 18.0.0 | LTS version recommended |
-| Git | ≥ 2.40 | Required by Claude Code |
-| DeepSeek Account | Verified identity | Must have available credits |
+| Git | ≥ 2.40 | Required by Claude Code; optional for Opencode |
+| DeepSeek Account | Verified identity | Only needed if using DeepSeek models |
 
-> ⚠️ **Note**: Claude Code is a CLI tool. On Windows, run PowerShell or CMD as **Administrator** for installation and initial configuration.
+> ⚠️ **Note**: Claude Code requires **Administrator** privileges on Windows. Opencode has no such restriction.
 
 ### Step 1: Install Node.js & npm
 
@@ -63,7 +63,51 @@ npm -v     # Should output 9.x.x or higher
 npm config set registry https://registry.npmmirror.com
 ```
 
-### Step 2: Install Claude Code
+### Step 2: Install AI Tools (Recommended: Opencode, Optional: Claude Code)
+
+#### Recommended: Opencode 🏆
+
+[Opencode](https://opencode.ai) is an open-source, free AI coding assistant CLI with significant advantages:
+
+- ✅ **Completely Free**: Built-in free models (no API Key needed); also supports 75+ providers including DeepSeek, Claude, GPT, Gemini
+- ✅ **Open Ecosystem**: Supports custom Skills, Agents, MCP Servers; active community (160K+ GitHub Stars)
+- ✅ **Native Windows Support**: Install via npm/scoop/chocolatey, no admin privileges required
+- ✅ **Skills Compatible**: All skills in this repo work directly in Opencode
+
+Choose any installation method:
+
+**Method 1: npm global install (recommended)**
+```bash
+npm install -g opencode-ai
+```
+
+**Method 2: Windows package managers**
+```bash
+# Scoop
+scoop install opencode
+
+# Chocolatey
+choco install opencode
+```
+
+**Method 3: One-liner script (requires WSL)**
+```bash
+curl -fsSL https://opencode.ai/install | bash
+```
+
+**Method 4: GitHub Releases**
+Download the pre-built binary for your platform from [Opencode Releases](https://github.com/anomalyco/opencode/releases), extract it, and add it to your PATH.
+
+Verify installation:
+```bash
+opencode --version
+```
+
+> 💡 **Zero-cost start**: Run `opencode` right after installation — the built-in free model works without any API Key!
+
+#### Optional: Claude Code
+
+If you prefer the official Claude Code (requires a paid Anthropic subscription):
 
 Run in an **Administrator** terminal:
 
@@ -77,7 +121,7 @@ Verify:
 claude --version
 ```
 
-> 💡 **Tip**: Do NOT run `claude` to log into an official account yet. We will use CC Switch to bypass official auth and connect directly to DeepSeek API.
+> 💡 **Tip**: If you choose Claude Code, do NOT run `claude` to log into an official account yet. Use CC Switch to bypass official auth and connect directly to DeepSeek API (see Step 4).
 
 ### Step 3: Get DeepSeek API Key
 
@@ -132,22 +176,40 @@ Find `DeepSeek` in the Provider list and click the **"Enable"** button on the ri
 
 ### Step 5: Verify & Use
 
-0. Create a new folder and place the thesis to be reviewed (supports .doc or .docx format; PDF is **not** supported) into that folder.
+Depending on your chosen AI tool:
 
-1. In File Explorer, click the address bar at the top, type `cmd` and press Enter to open a terminal (regular permissions are fine), then type:
+#### Option A: Opencode (recommended, zero config)
+
+1. Create a new folder and place the thesis to be reviewed (supports .doc/.docx; PDF not supported) into it
+2. In File Explorer, click the address bar, type `cmd` and press Enter, then:
 
 ```cmd
-claude
+opencode
 ```
 
-2. Once inside the interactive interface, run the `/model` command to confirm the model shows `deepseek-v4-pro` (or your configured model name)
-3. Send a test prompt:
+3. Inside the interactive interface, send a test prompt (free model works out of the box):
 
 ```
 > Hi
 ```
 
-If you get back a response without errors, you're all set! 🎉
+If you get a response without errors, you're all set! 🎉
+
+#### Option B: Claude Code (requires CC Switch + DeepSeek config)
+
+1. Create a new folder and place the thesis into it
+2. In File Explorer, click the address bar, type `cmd` and press Enter, then:
+
+```cmd
+claude
+```
+
+3. Run `/model` to confirm the model is set to `deepseek-v4-pro`
+4. Send a test prompt:
+
+```
+> Hi
+```
 
 ## Using Skills
 
@@ -171,7 +233,7 @@ npx skills list
 
 ### Trigger a Skill
 
-In the Claude Code interactive interface, trigger a skill via slash command (use `TAB` to autocomplete) or natural language:
+In the Opencode (or Claude Code) interactive interface, trigger a skill via slash command (use `TAB` to autocomplete) or natural language:
 
 ```bash
 # Slash command — TAB to select
@@ -187,8 +249,16 @@ You can iterate on and customize `/dxp-thesis-reviewer` using `/skill-creator` (
 /skill-creator Based on this review session, improve dxp-thesis-reviewer to support xxxx, add xxxx checks...
 ```
 
-### Skills Management (CC Switch)
+### Skills Management
 
+**Opencode mode:**
+Opencode natively supports Skills management:
+
+- Type `/skill` in the Opencode interface to browse and install community Skills
+- Or use the CLI: `npx skills add .` to register local skills
+- Registered skills are available via `/skill-name` immediately
+
+**CC Switch mode (Claude Code only):**
 CC Switch also provides unified Skills management:
 
 - In the **"Skills"** tab of CC Switch, install community Skills (e.g., `/skill-creator`) from GitHub repos with one click
@@ -206,17 +276,20 @@ npx skills remove dxp-thesis-reviewer
 
 ```
 dxp-skills/
-├── coding/                          # Code-related skills
-├── researching/                     # Research-related skills
+├── .gitee/                          # Gitee platform templates
+│   ├── ISSUE_TEMPLATE.zh-CN.md
+│   └── PULL_REQUEST_TEMPLATE.zh-CN.md
 ├── teaching/                        # Teaching-related skills
 │   └── dxp-thesis-reviewer/         # Undergrad thesis review & annotation
 │       ├── SKILL.md                 # Skill definition
 │       └── scripts/                 # Supporting scripts
+│           ├── analyze_thesis.py    # Comprehensive thesis analysis
 │           ├── append_summary.py    # Append red summary
 │           ├── batch_comment.py     # Batch comment injection
 │           ├── convert_doc_to_docx.py # .doc → .docx conversion
 │           ├── extract_structure.py # Extract document structure
 │           ├── extract_styles.py    # Extract document styles
+│           ├── find_paragraphs.py   # Find specific paragraphs
 │           ├── pack_docx.py         # Re-pack .docx
 │           ├── unpack_docx.py       # Unpack .docx
 │           ├── validate_keywords.py # Pre-validate keywords
@@ -231,11 +304,12 @@ dxp-skills/
 
 | Issue | Cause | Solution |
 |-------|-------|----------|
-| `claude` command not found | npm global path not in PATH | Restart terminal; or reinstall Node.js with "Add to PATH" checked |
+| `opencode` / `claude` command not found | npm global path not in PATH | Restart terminal; or reinstall Node.js with "Add to PATH" checked |
 | Connection timeout / 401 | Wrong API Key or network issue | Verify the key; ensure Base URL has no trailing `/v1` |
-| Error after model switch | Old session cached the old model name | Run `/model` inside Claude Code to reselect; or exit and restart |
+| Error after model switch | Old session cached the old model name | Run `/model` inside Opencode/Claude Code to reselect; or exit and restart |
 | CC Switch enable not working | Insufficient permissions to write config | Try running CC Switch as Administrator |
 | Chinese text garbled | Windows terminal encoding issue | Run `chcp 65001` to switch to UTF-8 encoding |
+| Opencode can't connect to free model | Network restrictions | Ensure terminal has internet access; or set proxy `set HTTPS_PROXY=http://127.0.0.1:7890` |
 
 ## Contributing
 
@@ -246,6 +320,8 @@ dxp-skills/
 
 ## Resources
 
+- [Opencode Official Website](https://opencode.ai) — Open-source AI coding assistant with free models
+- [Opencode GitHub](https://github.com/anomalyco/opencode) — 160K+ Stars, active community
 - [Claude Code Official Docs](https://docs.anthropic.com/en/docs/claude-code)
 - [CC Switch GitHub](https://github.com/farion1231/cc-switch)
 - [DeepSeek Platform](https://platform.deepseek.com/)
