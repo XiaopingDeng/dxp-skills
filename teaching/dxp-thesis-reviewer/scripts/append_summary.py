@@ -13,8 +13,16 @@ summary_items.json 格式:
     "章节比例失衡：...",
     "缺少必要的...",
     ...
+  ],
+  "defense_questions": [
+    "答辩问题1：...",
+    "答辩问题2：...",
+    "答辩问题3：...",
+    "答辩问题4：...",
+    "答辩问题5：..."
   ]
 }
+注: defense_questions 字段可选，若提供则在红色评价之后以蓝色字体追加答辩问题。
 """
 
 import json, sys, os
@@ -28,20 +36,27 @@ def qn(tag):
     ns, local = tag.split(':')
     return '{%s}%s' % ({'w': W, 'r': R}[ns], local)
 
-def make_red_paragraph(text, font_size='24', bold=False):
-    """Create a w:p element with red font color."""
+def make_colored_paragraph(text, font_size='24', bold=False, color='FF0000'):
+    """Create a w:p element with specified font color.
+    
+    Args:
+        text: Paragraph text
+        font_size: Font size in half-points (24 = 12pt)
+        bold: Whether text is bold
+        color: Hex color code (default: FF0000 = red)
+    """
     p = etree.Element(qn('w:p'))
 
-    # Add paragraph properties with red font in run properties
+    # Add paragraph properties
     pPr = etree.SubElement(p, qn('w:pPr'))
 
-    # Create a run with red font
+    # Create a run with colored font
     r = etree.SubElement(p, qn('w:r'))
     rPr = etree.SubElement(r, qn('w:rPr'))
 
-    # Set font color to red
-    color = etree.SubElement(rPr, qn('w:color'))
-    color.set(qn('w:val'), 'FF0000')
+    # Set font color
+    color_el = etree.SubElement(rPr, qn('w:color'))
+    color_el.set(qn('w:val'), color)
 
     # Set font size
     sz = etree.SubElement(rPr, qn('w:sz'))
@@ -60,12 +75,22 @@ def make_red_paragraph(text, font_size='24', bold=False):
     rFonts.set(qn('w:hAnsi'), 'Microsoft YaHei')
     rFonts.set(qn('w:eastAsia'), 'Microsoft YaHei')
 
-    # Add text
+    # Add text with preserved spaces
     t = etree.SubElement(r, qn('w:t'))
     t.text = text
     t.set('{%s}space' % XML_NS, 'preserve')
 
     return p
+
+
+def make_red_paragraph(text, font_size='24', bold=False):
+    """Create a w:p element with red font color."""
+    return make_colored_paragraph(text, font_size, bold, 'FF0000')
+
+
+def make_blue_paragraph(text, font_size='24', bold=False):
+    """Create a w:p element with blue font color."""
+    return make_colored_paragraph(text, font_size, bold, '0070C0')
 
 
 def make_red_separator():
@@ -133,8 +158,25 @@ def main():
     # Append blank line at end
     body.append(make_red_paragraph(''))
 
+    # Append defense questions in blue if provided
+    defense_qs = data.get('defense_questions', [])
+    if defense_qs:
+        # Separator
+        body.append(make_blue_paragraph(''))
+        body.append(make_blue_paragraph('【答辩问题】', font_size='28', bold=True))
+        body.append(make_blue_paragraph('—以下问题可在答辩时向学生提问—', font_size='20'))
+        body.append(make_blue_paragraph(''))
+        for i, q in enumerate(defense_qs, 1):
+            body.append(make_blue_paragraph(f'{i}. {q}'))
+        body.append(make_blue_paragraph(''))
+
     dt.write(dp, xml_declaration=True, encoding='UTF-8', standalone=True)
-    print(f'  Appended summary: {len(items)} items in red font')
+
+    parts = []
+    parts.append(f'Appended summary: {len(items)} items in red font')
+    if defense_qs:
+        parts.append(f'{len(defense_qs)} defense questions in blue font')
+    print('  ' + '; '.join(parts))
 
 
 if __name__ == '__main__':
