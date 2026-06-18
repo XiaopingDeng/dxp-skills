@@ -1,3 +1,11 @@
+---
+name: dxp-thesis-reviewer
+description: 本科毕业论文审核与批注 (Undergrad-Thesis-Reviewer)
+version: 1.0.0
+author: dxp
+allowed-tools: [Read, Write, Bash]
+---
+
 # Skill: 本科毕业论文审核与批注 (Undergrad-Thesis-Reviewer)
 
 ## 角色设定

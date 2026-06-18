@@ -1,6 +1,6 @@
 # dxp-skills
 
-A personal [Claude Code](https://claude.com/claude-code) Skills repository covering thesis review, code development, teaching, and research scenarios. Supports one-click API Provider switching via **CC Switch**, powered by **DeepSeek V4**.
+A personal Skills repository covering thesis review, code development, teaching, and research scenarios. Supports one-click API Provider switching via **CC Switch**, powered by **DeepSeek V4**.
 
 ## Table of Contents
 
@@ -91,8 +91,8 @@ claude --version
 | Parameter | Value | Description |
 |-----------|-------|-------------|
 | Base URL | `https://api.deepseek.com` | Official endpoint |
-| Expert Mode | `deepseek-v4-pro` | 1.6T parameters |
-| Fast Mode | `deepseek-v4-flash` | 284B parameters |
+| Expert Mode | `deepseek-v4-pro` | 1.6T |
+| Fast Mode | `deepseek-v4-flash` | 284B |
 | Context Window | 1M Tokens | Ultra-long context support |
 
 ### Step 4: Install & Configure CC Switch
@@ -132,9 +132,11 @@ Find `DeepSeek` in the Provider list and click the **"Enable"** button on the ri
 
 ### Step 5: Verify & Use
 
-1. Open a terminal (regular permissions are fine) and run:
+0. Create a new folder and place the thesis to be reviewed (supports .doc or .docx format; PDF is **not** supported) into that folder.
 
-```bash
+1. In File Explorer, click the address bar at the top, type `cmd` and press Enter to open a terminal (regular permissions are fine), then type:
+
+```cmd
 claude
 ```
 
@@ -142,7 +144,7 @@ claude
 3. Send a test prompt:
 
 ```
-> Hi.
+> Hi
 ```
 
 If you get back a response without errors, you're all set! 🎉
@@ -169,24 +171,30 @@ npx skills list
 
 ### Trigger a Skill
 
-In the Claude Code interactive interface, trigger a skill via slash command or natural language:
+In the Claude Code interactive interface, trigger a skill via slash command (use `TAB` to autocomplete) or natural language:
 
 ```bash
-# Slash command
-/dxp-thesis-reviewer
+# Slash command — TAB to select
+/dxp-thesis-reviewer Review the thesis xxxx.docx in this folder
+```
 
-# Natural language
-Please review my_thesis.docx
-Review this thesis
+The process requires multiple authorizations along the way. When finished, a reviewed version of the Word document with comments embedded will be generated in the local directory.
+
+You can iterate on and customize `/dxp-thesis-reviewer` using `/skill-creator` (installable from GitHub community repos with one click). For example:
+
+```bash
+# Slash command — TAB to select
+/skill-creator Based on this review session, improve dxp-thesis-reviewer to support xxxx, add xxxx checks...
 ```
 
 ### Skills Management (CC Switch)
 
 CC Switch also provides unified Skills management:
 
-- In the **"Skills"** tab of CC Switch, install community Skills (e.g., baoyu-skills) from GitHub repos with one click
+- In the **"Skills"** tab of CC Switch, install community Skills (e.g., `/skill-creator`) from GitHub repos with one click
 - Import custom Skills from local ZIP files
 - Skills take effect in Claude Code immediately — no extra configuration needed
+- You can also copy the `dxp-thesis-reviewer` folder into Claude Code's skills directory (typically located at `C:\Users\admin\.claude\skills`)
 
 ### Remove a Skill
 
