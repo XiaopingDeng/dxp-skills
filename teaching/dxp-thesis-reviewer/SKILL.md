@@ -1,7 +1,7 @@
 ---
 name: dxp-thesis-reviewer
 description: 本科毕业论文审核与批注 (Undergrad-Thesis-Reviewer)。当用户要求审核、评审、批注本科毕业论文（.docx）时触发。检查毕业论文的数据一致性、格式规范、图表规范、语法逻辑、是否存在AI代写/多源拼合迹象，并生成Word批注版文档（含红色宏观评价和蓝色答辩问题）。
-version: 1.1.0
+version: 2.0.0
 author: dxp
 allowed-tools: [Read, Write, Bash]
 ---
@@ -75,7 +75,7 @@ allowed-tools: [Read, Write, Bash]
 
 ## 执行工作流
 
-### Stage 0: 输入格式兼容（⚠️ 新增）
+### Stage 0: 输入格式兼容
 中文大学普遍使用 WPS 保存为 `.doc`（二进制 OLE2 格式），不是 `.docx`。**在执行任何后续操作前，必须确保输入为 `.docx` 格式**。
 
 1. 检查输入文件扩展名：
@@ -97,30 +97,11 @@ allowed-tools: [Read, Write, Bash]
 2. **⚠️ 全文提取与分析在 Python 中完成，不要用 Bash echo/grep 做中文匹配**。
    —— Windows Bash（Git Bash/MinGW）与中文 GBK/UTF-8 编码交互极易产生乱码，导致关键词匹配失败。
    使用以下 Python 代码一次性完成全文提取、章节识别、格式检查：
-   ```python
-   from lxml import etree
-   import re, os
+    ```bash
+    python scripts/analyze_thesis.py <unpacked_dir/> --output <unpacked_dir/>
+    ```
 
-   unpacked = '<unpacked_dir>'
-   W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
-   dt = etree.parse(os.path.join(unpacked, 'word/document.xml'))
-   paras = dt.getroot().findall('.//{%s}p' % W)
-   para_texts = [''.join(t.text or '' for t in p.iter('{%s}t' % W)) for p in paras]
-
-   # 打印全文供审核（每段带 [P序号] 前缀）
-   full_text = '\n'.join(f'[P{i}] {t}' for i, t in enumerate(para_texts) if t.strip())
-   with open(os.path.join(unpacked, '_full_text.txt'), 'w', encoding='utf-8') as f:
-       f.write(full_text)
-
-   # 识别章节结构
-   import json
-   chapters = {}
-   for i, t in enumerate(para_texts):
-       m = re.match(r'^(第?[1-9一二三四五六七八九十]\s*[章、]|[\d.]+\s+[^\s])', t.strip())
-       if m:
-           chapters[f'P{i}'] = t.strip()[:80]
-   print(json.dumps(chapters, ensure_ascii=False, indent=2))
-   ```
+    此脚本自动完成：章节字数统计、中英文摘要长度对比、图表标题位置检查（图下/表上）、标识符复用扫描（同一引脚/协议参数在不同章节是否一致）、参考文献年份分布，并输出 `_full_text.txt`（全文带 P 序号）和 `_analysis.json`。**不要在 Bash 中使用 grep/echo 做中文匹配**，请使用 `_full_text.txt` 或搜索工具。**不要在 PowerShell 中使用 python -c 内联中文**，需编码 Python 文件后执行。
 
 3. **强制输出**：【本科论文体检报告】，至少包含以下类别，不限于此：
    - **格式硬伤**：目录级数不足、图表标题位置错误、中英文标点混用、参考文献格式违规
@@ -137,15 +118,17 @@ allowed-tools: [Read, Write, Bash]
 ### Stage 2: 批注写入
 
 #### 工具链概览
-| 脚本 | 功能 |
-|------|------|
-| `scripts/convert_doc_to_docx.py` | Stage 0：.doc → .docx 格式转换 |
-| `scripts/unpack_docx.py` | 解包 .docx 到目录 |
-| `scripts/validate_keywords.py` | **（⚠️ 新增）** 批注前预验证：确认所有 keyword→段落映射正确 |
-| `scripts/batch_comment.py` | 一步完成：创建 comments.xml + 插入文档标记 + 补全所有基础设施 |
-| `scripts/append_summary.py` | 在文档末尾追加红色字体整体评价（全局性问题） |
-| `scripts/pack_docx.py` | 重新打包为 .docx 文件 |
-| `scripts/verify_comments.py` | 验证批注是否嵌入成功 |
+| 脚本 | 功能 | 阶段 |
+|------|------|------|
+| `scripts/convert_doc_to_docx.py` | .doc → .docx 格式转换 | Stage 0 |
+| `scripts/unpack_docx.py` | 解包 .docx 到目录 | Stage 1 |
+| `scripts/analyze_thesis.py` | 章节字数统计 + 中英文摘要长度对比 + 图表位置规范 + 标识符复用扫描 + 参考文献年份分布 | Stage 1 |
+| `scripts/find_paragraphs.py` | （交互式）按关键词搜索段落、模糊匹配预览、验证 keyword 在段落内位置 | Stage 1/2 |
+| `scripts/validate_keywords.py` | 批注前预验证：精确匹配 + difflib 模糊匹配 + **字符级编码诊断** + 关键词建议（--suggestions） | Stage 2 |
+| `scripts/batch_comment.py` | 批注写入：支持 `sub_keyword` 精确定位段落内句子，`--force` 跳过失败继续执行，失败时硬中止 | Stage 2 |
+| `scripts/append_summary.py` | 在文档末尾追加红色字体整体评价 + 蓝色答辩问题 | Stage 2 |
+| `scripts/pack_docx.py` | 重新打包为 .docx 文件 | Stage 2 |
+| `scripts/verify_comments.py` | 验证批注是否嵌入成功（ID 配对、样式存在、Content Types 注册） | Stage 2 |
 
 #### 操作步骤
 
@@ -159,7 +142,19 @@ python scripts/unpack_docx.py <input.docx> <unpacked_dir/>
 ⚠️ **关键词选取原则（重要）**：
 - 选择目标段落中**独有的**短句片段作为关键词（10-30字为宜），避免选太短的词（如"系统"）导致匹配到几十处
 - 关键词必须能在 `_full_text.txt` 中精确找到。若同一关键词在全文出现多次，用 `occ` 参数指定第几次出现（0-based）
-- **不要依赖 Bash 的 grep/echo 验证关键词**（Windows Git Bash 中文编码极易失败）。使用 Python 内建方法验证。
+- **不要依赖 Bash 的 grep/echo 验证关键词**（Windows Git Bash 中文编码极易失败）。使用 Python 内建方法验证
+- 使用 `scripts/find_paragraphs.py` 交互式搜索段落，快速定位合适的关键词：输入 keyword → 显示所有匹配段落及上下文 → 支持模糊匹配 → 可切换用于 comments.json
+
+```bash
+# 交互模式：搜索关键词，预览匹配段落，一键生成 JSON 片段
+python scripts/find_paragraphs.py <unpacked_dir/>
+```
+
+- ⚠️ **关键词常见陷阱**：
+  1. **全半角空格差异**：中文段落中的空格可能是全角 `\u3000`，keyword 中使用了半角 `\u0020` 则匹配失败
+  2. **OOXML 文本分割**：`<w:t>` 可能在句子中间断开（换行/分页标记），keyword 跨越了分割点
+  3. **隐藏字符**：从 PDF 复制的中文可能含零宽空格 `\u200B`
+  4. **标点全半角不一致**：中文句号"。" vs 英文句点"." 是最常见问题
 
 `comments.json` 格式：
 ```json
@@ -168,16 +163,17 @@ python scripts/unpack_docx.py <input.docx> <unpacked_dir/>
   "initials": "DXP",
   "comments": [
     {"id": 0, "keyword": "需要批注的独特关键词", "occ": 0, "text": "[问题类型] 具体修改建议。"},
-    {"id": 1, "keyword": "另一处问题关键词", "occ": 0, "text": "[问题类型] 具体修改建议。"}
+    {"id": 1, "keyword": "段落中的关键词", "sub_keyword": "只高亮这一小段（可选）", "occ": 0, "text": "[问题类型] 具体修改建议。"}
   ]
 }
 ```
 - `id`：从 0 开始递增的整数，必须唯一。
 - `keyword`：用于匹配目标段落的关键词（⚠️ 选取该段落中的独特短句片段，10-30字）。
+- `sub_keyword`：**（可选项）** 段落内更精确的子句，批注只高亮这一小段，而非整个段落。留空则高亮整段。
 - `occ`：当 keyword 在全文出现多次时，指定第几次出现（0-based）；默认为 0。
 - `text`：批注文本，严格遵循 `[问题类型] 具体修改建议。` 格式。
 
-**Step 3：预验证（⚠️ 新增——必须先执行）**
+**Step 3：预验证（⚠️ 必须先执行）**
 
 在执行正式批注写入前，运行关键字验证脚本确认所有映射正确：
 ```bash
@@ -185,10 +181,22 @@ python scripts/validate_keywords.py <unpacked_dir/> <comments.json>
 ```
 此脚本输出：
 - 每个批注的匹配状态（OK / 关键词不存在 / occ 超出范围）
-- 对于每个 OK，打印匹配到的段落前 120 字符供人工核对是否目标段落
+- **模糊匹配**：精确匹配失败时自动使用 difflib.SequenceMatcher 查找最接近的段落，显示匹配度评分
+- **字符级编码诊断**：失败时输出关键字前 30 个字符的 Unicode 编码（如 `\u538b` vs `\u0020`），帮助发现全半角、GBK/UTF-8 混用等隐蔽问题
+- 若 `sub_keyword` 存在，也会验证其在段落内是否存在
 - 退出码 = 失败数量（0 = 全部通过）
 
-**如果存在 FAIL，必须修正 comments.json 中对应条目的 keyword/occ 后重新验证，直到全部 OK**。关键词不存在的最常见原因是编码问题——尝试缩短关键词或选取段落中更独有的片段重试。
+```bash
+# --suggestions 模式：为每个成功匹配的段落推荐备选关键词，便于为后续批注选取更好的 keyword
+python scripts/validate_keywords.py <unpacked_dir/> <comments.json> --suggestions
+```
+
+**如果存在 FAIL，必须修正 comments.json 中对应条目的 keyword/occ 后重新验证，直到全部 OK**。关键词不存在的最常见原因：
+1. **编码问题**：全半角空格差异（中文文本中的空格经常是全角 `\u3000` 而非半角 `\u0020`）
+2. **多余空白符**：段落中可能含 OOXML 分割导致的零宽空格/换行
+3. **选取了太通用/太长的片段**：缩短关键词（10-20 字）或选取该段落中更独有的片段重试
+
+使用 `scripts/find_paragraphs.py`（交互模式）快速搜索定位目标段落中的合适关键词。
 
 **Step 4：批量写入批注**
 ```bash
@@ -200,8 +208,14 @@ python scripts/batch_comment.py <unpacked_dir/> <comments.json> --author "指导
 2. 创建 `word/commentsExtended.xml`
 3. 补全 `CommentText`、`CommentReference`、`CommentSubject`、`BalloonText` 四种样式
 4. 为所有段落添加 `w15:paraId`
-5. 在目标段落内部插入 `commentRangeStart`/`commentRangeEnd`（段落开头）和 `commentReference`（段落末尾的 `<w:r>`）
-6. 注册 `[Content_Types].xml` 和 `rels`
+5. 在目标段落内部插入 `commentRangeStart`/`commentRangeEnd` 和 `commentReference`
+6. **若指定了 `sub_keyword`**：精确计算 sub_keyword 在 `<w:r>` 内的字符偏移位置，只包裹该子句，而非高亮整个段落
+7. 注册 `[Content_Types].xml` 和 `rels`
+
+**失败处理**：
+- 任何 keyword 匹配失败时，脚本**硬中止**（exit code = 失败数），并打印失败信息
+- 使用 `--force` 跳过失败继续执行（用于"不重要但想一次性先写完"的场景）
+- 失败时建议运行 `scripts/validate_keywords.py` 和 `scripts/find_paragraphs.py` 定位问题
 
 ⚠️ **OOXML 批注标记位置铁律**：
 - `commentRangeStart` 和 `commentRangeEnd` 必须是 `<w:p>` 的**直接子元素**
@@ -256,7 +270,7 @@ python scripts/append_summary.py <unpacked_dir/> summary_items.json
 - 不要写"论文写得不错"等废话；不要超过10项
 - 如果有更好的宏观视角建议，替换上述模板示例
 
-**5b. 蓝色答辩问题（⚠️ 新增）**
+**5b. 蓝色答辩问题**
 
 在红色宏观评价之后，以蓝色字体追加**5个答辩问题**。这些问题用于指导教师在答辩时考察学生对论文的掌握程度。
 

@@ -2,6 +2,11 @@
 """
 批量批注写入工具 —— 一步完成所有 OOXML 级批注基础设施构建和标记插入。
 
+改进说明 (v2.0):
+  - 支持 sub_keyword: 精确定位到段落内的具体句子，而非高亮整个段落
+  - 匹配失败时硬中止(exit code=失败数)，不再静默跳过
+  - 无参数的 --force 可跳过严格检查继续执行
+
 用法:
     python batch_comment.py <unpacked_dir/> <comments.json> --author "指导教师姓名" --initials "缩写"
 
@@ -10,8 +15,19 @@ comments.json 格式:
   "author": "指导教师：邓晓平",
   "initials": "DXP",
   "comments": [
-    {"id": 0, "keyword": "需要批注的关键词", "occ": 0, "text": "[问题类型] 具体修改建议。"},
-    ...
+    {
+      "id": 0,
+      "keyword": "需要批注的关键词",
+      "occ": 0,
+      "text": "[问题类型] 具体修改建议。"
+    },
+    {
+      "id": 1,
+      "keyword": "段落中的关键词",
+      "sub_keyword": "只高亮这一小段（可选）",
+      "occ": 0,
+      "text": "[问题类型] 具体修改建议。"
+    }
   ]
 }
 """
@@ -67,7 +83,6 @@ def ensure_relationship(unpacked, target, rel_type):
 
 
 def ensure_comment_styles(unpacked):
-    """Add CommentText, CommentReference, CommentSubject, BalloonText to styles.xml."""
     sp = os.path.join(unpacked, 'word', 'styles.xml')
     st = etree.parse(sp)
     sr = st.getroot()
@@ -115,7 +130,6 @@ def ensure_comment_styles(unpacked):
 
 
 def build_comments_xml(unpacked, comments_data):
-    """Build word/comments.xml with all comments and durableId."""
     cp = os.path.join(unpacked, 'word', 'comments.xml')
     root = etree.Element(qn('w:comments'), nsmap=NSMAP)
     root.set('{%s}Ignorable' % MC, 'w14 w15 w16cex w16cid')
@@ -149,7 +163,6 @@ def build_comments_xml(unpacked, comments_data):
 
 
 def build_comments_extended(unpacked, comment_ids):
-    """Build word/commentsExtended.xml with w15:commentEx entries."""
     cep = os.path.join(unpacked, 'word', 'commentsExtended.xml')
     root = etree.Element(qn('w15:commentsEx'), nsmap={'w15': W15, 'mc': MC})
     root.set('{%s}Ignorable' % MC, 'w15')
@@ -164,27 +177,24 @@ def build_comments_extended(unpacked, comment_ids):
     print(f'  commentsExtended.xml: {len(comment_ids)} entries')
 
 
-def insert_document_markers(unpacked, para_indices):
-    """Remove old markers and insert correct ones INSIDE target paragraphs."""
+def insert_document_markers(unpacked, para_indices, sub_keywords_map):
+    """Remove old markers and insert correct ones, with optional sub_keyword for precise range."""
     dp = os.path.join(unpacked, 'word', 'document.xml')
     dt = etree.parse(dp)
     dr = dt.getroot()
     all_p = dr.findall('.//{%s}p' % W)
 
-    # Remove all existing markers
-    for tag_name in ['commentRangeStart', 'commentRangeEnd', 'commentReference']:
-        for el in list(dr.iter('{%s}%s' % (W, tag_name))):
+    for tag in ['commentRangeStart', 'commentRangeEnd', 'commentReference']:
+        for el in list(dr.iter('{%s}%s' % (W, tag))):
             parent = el.getparent()
             if parent is not None:
                 parent.remove(el)
     print(f'  Cleared old markers from {len(all_p)} paragraphs')
 
-    # Add w15:paraId to all paragraphs
     for p in all_p:
         if not p.get(qn('w15:paraId')):
             p.set(qn('w15:paraId'), str(uuid.uuid4()).upper()[:8])
 
-    # Insert markers for each comment
     for cid, para_idx in sorted(para_indices, key=lambda x: x[1], reverse=True):
         if para_idx >= len(all_p):
             print(f'  WARNING: para_idx {para_idx} out of range for comment {cid}')
@@ -202,11 +212,45 @@ def insert_document_markers(unpacked, para_indices):
         cref_el = etree.SubElement(r, qn('w:commentReference'))
         cref_el.set(qn('w:id'), sid)
 
-        # Insert CRS + CRE at position 0 in the paragraph
-        target_p.insert(0, crs)
-        target_p.insert(1, cre)
-        # Append commentReference run at the end of the paragraph
-        target_p.append(r)
+        sub_kw = sub_keywords_map.get(cid)
+        if sub_kw:
+            # Insert markers around the sub_keyword inside the paragraph
+            # Find which <w:r> elements contain the sub_keyword and wrap those
+            para_text = ''.join(t.text or '' for t in target_p.iter('{%s}t' % W))
+            sub_pos = para_text.find(sub_kw)
+            if sub_pos >= 0:
+                sub_end = sub_pos + len(sub_kw)
+                # Walk <w:r> elements to find the range
+                run_elements = list(target_p.findall('{%s}r' % W))
+                char_offset = 0
+                insert_crs = None
+                insert_cre_after = None
+                for ri, run in enumerate(run_elements):
+                    run_text = ''.join(t.text or '' for t in run.iter('{%s}t' % W))
+                    run_len = len(run_text)
+                    run_end = char_offset + run_len
+                    if insert_crs is None and run_end > sub_pos:
+                        insert_crs = run
+                    if insert_cre_after is None and run_end >= sub_end:
+                        insert_cre_after = ri
+                        break
+                    char_offset = run_end
+                if insert_crs and insert_cre_after is not None:
+                    target_p.insert(list(target_p).index(insert_crs), crs)
+                    target_p.insert(list(target_p).index(insert_crs) + 1, cre)
+                    target_p.append(r)
+                else:
+                    target_p.insert(0, crs)
+                    target_p.insert(1, cre)
+                    target_p.append(r)
+            else:
+                target_p.insert(0, crs)
+                target_p.insert(1, cre)
+                target_p.append(r)
+        else:
+            target_p.insert(0, crs)
+            target_p.insert(1, cre)
+            target_p.append(r)
 
     dt.write(dp, xml_declaration=True, encoding='UTF-8', standalone=True)
     print(f'  Inserted markers for {len(para_indices)} comments')
@@ -218,6 +262,7 @@ def main():
     parser.add_argument('comments_json', help='Path to comments JSON file')
     parser.add_argument('--author', default='指导教师', help='Comment author name')
     parser.add_argument('--initials', default='DS', help='Comment author initials')
+    parser.add_argument('--force', action='store_true', help='Continue even if some keywords fail to match')
     args = parser.parse_args()
 
     with open(args.comments_json, 'r', encoding='utf-8') as f:
@@ -227,18 +272,16 @@ def main():
     initials = data.get('initials', args.initials)
     comments = data['comments']
 
-    # Build paragraph text index for keyword matching
-    dp = os.path.join(args.unpacked, 'word', 'document.xml')
-    dt = etree.parse(dp)
+    dp_file = os.path.join(args.unpacked, 'word', 'document.xml')
+    dt = etree.parse(dp_file)
     dr = dt.getroot()
     all_p = dr.findall('.//{%s}p' % W)
     para_texts = [''.join(t.text or '' for t in p.iter('{%s}t' % W)) for p in all_p]
     print(f'Paragraph index: {len(para_texts)} paragraphs')
 
-    # Resolve paragraph indices from keywords
     para_indices = []
     comment_data = []
-    skipped = 0
+    failures = []
 
     for cmt in comments:
         cid = cmt['id']
@@ -253,10 +296,21 @@ def main():
                 'id': cid, 'author': author, 'initials': initials, 'text': text,
             })
         else:
-            print(f'  SKIP [{cid}]: keyword "{keyword[:60]}" occ={occ} found {len(matches)} matches')
-            skipped += 1
+            msg = f'FAIL id={cid}: keyword "{keyword[:80]}" occ={occ} found {len(matches)} match(es)'
+            print(f'  {msg}')
+            failures.append(msg)
 
-    print(f'\nResolved: {len(para_indices)} comments, {skipped} skipped')
+    if failures:
+        print(f'\n*** {len(failures)} keyword(s) failed to match ***')
+        if not args.force:
+            print('Use --force to skip failed keywords and continue, or fix comments.json first.')
+            print('Tip: run scripts/find_paragraphs.py with --verify to debug failing keywords.')
+            sys.exit(len(failures))
+        else:
+            print('--force set: continuing with successful matches only.')
+
+    print(f'\nResolved: {len(para_indices)} comments, {len(failures)} failures')
+
     print(f'\n=== Step 1: Infrastructure ===')
     ensure_content_type(args.unpacked, '/word/comments.xml',
                         'application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml')
@@ -276,7 +330,12 @@ def main():
     build_comments_extended(args.unpacked, [c['id'] for c in comment_data])
 
     print(f'\n=== Step 4: Insert markers into document.xml ===')
-    insert_document_markers(args.unpacked, para_indices)
+    sub_keywords = {}
+    for cmt in comments:
+        if 'sub_keyword' in cmt:
+            cid = cmt['id']
+            sub_keywords[cid] = cmt['sub_keyword']
+    insert_document_markers(args.unpacked, para_indices, sub_keywords)
 
     print(f'\n=== Done: {len(para_indices)} comments written ===')
 
