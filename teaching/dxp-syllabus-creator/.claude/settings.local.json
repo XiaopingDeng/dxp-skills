@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Bash(command -v claude)",
+      "Read(//g/AI4ALL/dxp-skills/**)",
+      "Bash(claude -p \"say hello\" --output-format text)",
+      "Bash(python -m scripts.run_loop --eval-set 'G:\\\\AI4ALL\\\\dxp-skills\\\\teaching\\\\dxp-syllabus-creator\\\\eval_set.json' --skill-path 'G:\\\\AI4ALL\\\\dxp-skills\\\\teaching\\\\dxp-syllabus-creator' --model sonnet --max-iterations 5 --verbose --report 'G:\\\\AI4ALL\\\\dxp-skills\\\\teaching\\\\dxp-syllabus-creator\\\\workspace\\\\optimization_report.html' --results-dir 'G:\\\\AI4ALL\\\\dxp-skills\\\\teaching\\\\dxp-syllabus-creator\\\\workspace')",
+      "Bash(python *)",
+      "Bash(PYTHONUTF8=1 python -m scripts.run_loop --eval-set 'G:\\\\AI4ALL\\\\dxp-skills\\\\teaching\\\\dxp-syllabus-creator\\\\eval_set.json' --skill-path 'G:\\\\AI4ALL\\\\dxp-skills\\\\teaching\\\\dxp-syllabus-creator' --model sonnet --max-iterations 5 --verbose --report 'G:\\\\AI4ALL\\\\dxp-skills\\\\teaching\\\\dxp-syllabus-creator\\\\workspace\\\\optimization_report.html' --results-dir 'G:\\\\AI4ALL\\\\dxp-skills\\\\teaching\\\\dxp-syllabus-creator\\\\workspace')",
+      "Bash(PYTHONIOENCODING=utf-8 python -m scripts.package_skill \"G:\\\\AI4ALL\\\\dxp-skills\\\\teaching\\\\dxp-syllabus-creator\")",
+      "Bash(PYTHONUTF8=1 python -c ' *)",
+      "Bash(PYTHONUTF8=1 python *)",
+      "Bash(xxd)",
+      "Bash(fuser \"G:/AI4ALL/dxp-skills/teaching/dxp-syllabus-creator/dxp-syllabus-creator.skill\")"
+    ]
+  }
+}

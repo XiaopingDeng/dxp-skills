@@ -1,0 +1,372 @@
+# -*- coding: utf-8 -*-
+"""
+课程教学大纲 docx 生成脚本 — 基于模板的版本
+
+两种用法：
+  1. SyllabusFromTemplate(template_path) — 打开已有模板 docx，填充内容
+  2. SyllabusDocx() — 从零创建文档（备用，不推荐）
+
+模板结构说明：
+  - 理论课程模板: 页眉表 9行x11列（含学分/总学时/讲课/实验/上机/实践明细）
+  - 课程设计/实习/毕设模板: 页眉表 3行x4列（简洁型）
+"""
+
+import docx
+from docx.shared import Pt, Cm
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.ns import qn, nsdecls
+from docx.oxml import parse_xml
+
+
+# ============================================================
+# 常量
+# ============================================================
+FONT_NAME = '宋体'
+FONT_SIZE = Pt(12)
+NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+
+
+def _make_run(run, text, bold=False, size=None, font_name=None):
+    """统一设置 run 属性"""
+    run.text = text
+    run.bold = bold
+    run.font.size = size or FONT_SIZE
+    run.font.name = font_name or FONT_NAME
+    run.element.rPr.rFonts.set(qn('w:eastAsia'), font_name or FONT_NAME)
+
+
+def _set_cell(cell, text, bold=False, align=WD_ALIGN_PARAGRAPH.CENTER):
+    """设置单元格文本"""
+    cell.text = ''
+    p = cell.paragraphs[0]
+    p.alignment = align
+    _make_run(p.add_run(text), text, bold=bold)
+
+
+def _shade(cell, color='D5E8F0'):
+    """给单元格加底色"""
+    cell._tc.get_or_add_tcPr().append(
+        parse_xml(f'<w:shd {nsdecls("w")} w:fill="{color}"/>'))
+
+
+def _new_para_elem():
+    """创建空白段落 XML 元素"""
+    return parse_xml(
+        f'<w:p xmlns:w="{NS}"><w:r><w:rPr><w:rFonts w:eastAsia="{FONT_NAME}"/>'
+        f'<w:sz w:val="24"/></w:rPr><w:t></w:t></w:r></w:p>')
+
+
+# ============================================================
+# SyllabusFromTemplate — 基于模板的文档生成器
+# ============================================================
+class SyllabusFromTemplate:
+    """基于模板 docx 的大纲文档生成器。
+
+    用法:
+        doc = SyllabusFromTemplate("模板路径.docx")
+        doc.fill_header({...})          # 填充页眉信息表
+        doc.set_title("课程名称")       # 替换标题
+        doc.set_section(0, "一、...")    # 替换第 i 节标题
+        doc.insert_body(ref, "正文")     # 在 ref 后插入正文
+        doc.insert_h3(ref, "子标题")     # 在 ref 后插入子标题
+        doc.insert_table(ref, ...)       # 在 ref 后插入表格
+        doc.save("输出路径.docx")
+    """
+
+    def __init__(self, template_path):
+        self.doc = docx.Document(template_path)
+        self._setup_style()
+        # 页眉表 — 理论课是第0个表，其他也是第0个表
+        self.header_table = self.doc.tables[0] if self.doc.tables else None
+        self._detect_template_type()
+        # 预定位各节标题段落（按模板固定索引）
+        self._index_sections()
+
+    def _setup_style(self):
+        s = self.doc.styles['Normal']
+        s.font.name = FONT_NAME
+        s.font.size = FONT_SIZE
+        s.element.rPr.rFonts.set(qn('w:eastAsia'), FONT_NAME)
+        s.paragraph_format.line_spacing = 1.25
+
+    def _detect_template_type(self):
+        """识别模板类型"""
+        if self.header_table and len(self.header_table.rows) == 9:
+            self.template_type = 'theory'
+        else:
+            self.template_type = 'other'
+
+    def _index_sections(self):
+        """定位模板中各节标题和页脚的段落对象。
+
+        理论模板段落索引（打开后）:
+            P0=标题, P1=空, P2=一, P3=二, P4=三, P5=四, P6=五, P7=六,
+            P8=空, P9=编写人, P10=审核人, P11=批准人, P12=日期, P13+=空
+
+        设计/实习/毕设模板段落索引:
+            P0=标题, P1=一, P2=二, P3=三, P4=四, P5=五, P6=六,
+            P7=空, P8=编写人, P9=审核人, P10=批准人, P11=日期
+        """
+        paras = self.doc.paragraphs
+        # 节标题: 非空且非标题的第1~6个段落
+        section_paras = []
+        footer_paras = []
+        for p in paras:
+            t = p.text.strip()
+            if len(t) > 5 and ('�' not in t):  # non-garbled meaningful text
+                if any(kw in t for kw in ['编 写', '审 核', '批 准', '编写日期']):
+                    footer_paras.append(p)
+                elif p is not paras[0]:
+                    section_paras.append(p)
+
+        # Fallback: use fixed indices based on template type
+        if self.template_type == 'theory':
+            self.sections = {
+                0: paras[2],  # 一
+                1: paras[3],  # 二
+                2: paras[4],  # 三
+                3: paras[5],  # 四
+                4: paras[6],  # 五
+                5: paras[7],  # 六
+            }
+            self.footer = {
+                'author': paras[9] if len(paras) > 9 else None,
+                'reviewer': paras[10] if len(paras) > 10 else None,
+                'approver': paras[11] if len(paras) > 11 else None,
+                'date': paras[12] if len(paras) > 12 else None,
+            }
+        else:
+            self.sections = {
+                0: paras[1],  # 一
+                1: paras[2],  # 二
+                2: paras[3],  # 三
+                3: paras[4],  # 四
+                4: paras[5],  # 五
+                5: paras[6],  # 六
+            }
+            self.footer = {
+                'author': paras[8] if len(paras) > 8 else None,
+                'reviewer': paras[9] if len(paras) > 9 else None,
+                'approver': paras[10] if len(paras) > 10 else None,
+                'date': paras[11] if len(paras) > 11 else None,
+            }
+
+    # ── 页眉信息表填充 ──
+
+    def fill_header_theory(self, code, name, en_name, credits, total_hours,
+                           lecture_hours, lab_hours, practice_hours=0,
+                           computer_hours=0, semester='', assessment='',
+                           audience='', prerequisites='', followups='',
+                           supervisor=''):
+        """填充理论课程页眉表（9行x11列）。
+
+        表结构:
+          R0: 课程编码 | value | 课程名称 | 课程名称(span) | 课程负责人 | value
+          R1: 课程名称 | value (全宽合并)
+          R2: 英文名称 | value (全宽合并)
+          R3: 学分 | value | | 总学时 | 总学时 | 讲 | 实验 | 实验 | 上机 | 上机 | 实践
+          R4: 执行学期 | value(span) | | value(总学时) | | value(讲) | value(实验) | | value(上机) | | value(实践)
+          R5: 考核方式 | value (全宽合并)
+          R6: 授课对象 | value (全宽合并)
+          R7: 先修课程 | value (全宽合并)
+          R8: 后续课程 | value (全宽合并)
+        """
+        t = self.header_table
+        if not t or len(t.rows) < 9:
+            return
+
+        set_c = _set_cell
+        # R0
+        set_c(t.rows[0].cells[1], code)
+        set_c(t.rows[0].cells[2], name)  # span=2
+        set_c(t.rows[0].cells[7], supervisor)
+        # R1 — 课程名称全称
+        set_c(t.rows[1].cells[1], name, align=WD_ALIGN_PARAGRAPH.LEFT)
+        # R2 — 英文名称
+        set_c(t.rows[2].cells[1], en_name, align=WD_ALIGN_PARAGRAPH.LEFT)
+        # R3 — 学分值（填在学分下方空单元格，保持表头标签不动）
+        set_c(t.rows[3].cells[1], str(credits))
+        # R4 — 学时和执行学期
+        set_c(t.rows[4].cells[1], semester, align=WD_ALIGN_PARAGRAPH.LEFT)
+        set_c(t.rows[4].cells[3], str(total_hours))
+        set_c(t.rows[4].cells[5], str(lecture_hours))
+        set_c(t.rows[4].cells[6], str(lab_hours))   # 实验（merged with C7）
+        set_c(t.rows[4].cells[8], str(computer_hours))  # 上机（merged with C9）
+        set_c(t.rows[4].cells[10], str(practice_hours))  # 实践
+        # R5 — 考核方式
+        set_c(t.rows[5].cells[1], assessment, align=WD_ALIGN_PARAGRAPH.LEFT)
+        # R6 — 授课对象
+        set_c(t.rows[6].cells[1], audience, align=WD_ALIGN_PARAGRAPH.LEFT)
+        # R7 — 先修课程
+        set_c(t.rows[7].cells[1], prerequisites, align=WD_ALIGN_PARAGRAPH.LEFT)
+        # R8 — 后续课程
+        set_c(t.rows[8].cells[1], followups, align=WD_ALIGN_PARAGRAPH.LEFT)
+
+    def fill_header_other(self, code, name, en_name, supervisor='',
+                          prerequisites='', period_semester=''):
+        """填充设计/实习/毕设页眉表（3行x4列）。
+
+        表结构:
+          R0: 课程编码 | value | 课程负责人 | value
+          R1: 课程名称（中文）| value | 课程名称（英文）| value
+          R2: 先修课程 | value | 实践周期及执行学期 | value
+        """
+        t = self.header_table
+        if not t or len(t.rows) < 3:
+            return
+        set_c = _set_cell
+        set_c(t.rows[0].cells[1], code)
+        set_c(t.rows[0].cells[3], supervisor)
+        set_c(t.rows[1].cells[1], name, align=WD_ALIGN_PARAGRAPH.LEFT)
+        set_c(t.rows[1].cells[3], en_name, align=WD_ALIGN_PARAGRAPH.LEFT)
+        set_c(t.rows[2].cells[1], prerequisites, align=WD_ALIGN_PARAGRAPH.LEFT)
+        set_c(t.rows[2].cells[3], period_semester, align=WD_ALIGN_PARAGRAPH.LEFT)
+
+    # ── 标题 ──
+
+    def set_title(self, text):
+        """替换文档标题（P0）"""
+        p = self.doc.paragraphs[0]
+        self._clear_para(p)
+        run = p.runs[0] if p.runs else p.add_run()
+        _make_run(run, text + '（宋体：四号黑体、加粗）', bold=True)
+
+    # ── 节标题 ──
+
+    def set_section(self, index, text):
+        """替换第 index 节标题（0=第一节）。"""
+        p = self.sections.get(index)
+        if p is None:
+            return
+        self._clear_para(p)
+        run = p.runs[0] if p.runs else p.add_run()
+        _make_run(run, text, bold=True, size=Pt(14))
+
+    # ── 内容插入 ──
+
+    def _clear_para(self, p):
+        for r in p.runs:
+            r.text = ''
+        for t_elem in p._element.findall(f'{{{NS}}}t'):
+            t_elem.text = ''
+
+    def insert_body(self, ref_element, text, indent=True):
+        """在指定元素后插入正文段落。返回新段落的 _element。"""
+        p_elem = _new_para_elem()
+        ref_element.addnext(p_elem)
+        para = docx.text.paragraph.Paragraph(p_elem, self.doc)
+        if not indent:
+            para.paragraph_format.first_line_indent = Cm(0)
+        run = para.add_run(text)
+        _make_run(run, text)
+        return p_elem
+
+    def insert_h3(self, ref_element, text):
+        """在指定元素后插入子标题。返回新段落的 _element。"""
+        p_elem = _new_para_elem()
+        ref_element.addnext(p_elem)
+        para = docx.text.paragraph.Paragraph(p_elem, self.doc)
+        para.paragraph_format.first_line_indent = Cm(0)
+        run = para.add_run(text)
+        _make_run(run, text, bold=True)
+        return p_elem
+
+    def insert_table(self, ref_element, headers, rows, col_widths_cm):
+        """在指定元素后插入表格。返回表格的 _tbl 元素。
+
+        Args:
+            headers: [str, ...] 表头
+            rows: [[(text, alignment), ...], ...] 数据行
+            col_widths_cm: [float, ...] 列宽（厘米）
+        """
+        ncols = len(headers)
+        table = self.doc.add_table(rows=1 + len(rows), cols=ncols)
+        table.style = 'Table Grid'
+        table.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+        # 表头
+        for ci, h in enumerate(headers):
+            cell = table.rows[0].cells[ci]
+            cell.text = ''
+            p = cell.paragraphs[0]
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            run = p.add_run(h)
+            run.bold = True
+            run.font.size = FONT_SIZE
+            run.font.name = FONT_NAME
+            run.element.rPr.rFonts.set(qn('w:eastAsia'), FONT_NAME)
+            _shade(cell)
+
+        # 数据行
+        for ri, row_data in enumerate(rows):
+            for ci, (text, align) in enumerate(row_data):
+                cell = table.rows[ri + 1].cells[ci]
+                cell.text = ''
+                p = cell.paragraphs[0]
+                p.alignment = align
+                run = p.add_run(text)
+                run.font.size = FONT_SIZE
+                run.font.name = FONT_NAME
+                run.element.rPr.rFonts.set(qn('w:eastAsia'), FONT_NAME)
+                # 合计行加粗
+                if ri == len(rows) - 1:
+                    run.bold = True
+
+        # 列宽
+        for ci, w in enumerate(col_widths_cm):
+            for row in table.rows:
+                row.cells[ci].width = Cm(w)
+
+        # 将表格移到 ref_element 后面
+        ref_element.addnext(table._tbl)
+        return table._tbl
+
+    def insert_label(self, ref_element, text):
+        """插入居中的表格标签行（如"表1 XXXX"）。返回新段落 _element。"""
+        p_elem = _new_para_elem()
+        ref_element.addnext(p_elem)
+        para = docx.text.paragraph.Paragraph(p_elem, self.doc)
+        para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        para.paragraph_format.first_line_indent = Cm(0)
+        run = para.add_run(text)
+        _make_run(run, text)
+        return p_elem
+
+    # ── 页脚 ──
+
+    def set_footer_author(self, text=''):
+        """设置编写人"""
+        p = self.footer.get('author')
+        if p:
+            self._clear_para(p)
+            run = p.runs[0] if p.runs else p.add_run()
+            _make_run(run, f'编 写 人：{text}')
+
+    def set_footer_reviewer(self, text=''):
+        """设置审核人"""
+        p = self.footer.get('reviewer')
+        if p:
+            self._clear_para(p)
+            run = p.runs[0] if p.runs else p.add_run()
+            _make_run(run, f'审 核 人：{text}')
+
+    def set_footer_approver(self, text=''):
+        """设置批准人"""
+        p = self.footer.get('approver')
+        if p:
+            self._clear_para(p)
+            run = p.runs[0] if p.runs else p.add_run()
+            _make_run(run, f'批 准 人：{text}')
+
+    def set_footer_date(self, text='2026 年  月  日'):
+        """设置编写日期"""
+        p = self.footer.get('date')
+        if p:
+            self._clear_para(p)
+            run = p.runs[0] if p.runs else p.add_run()
+            _make_run(run, f'编写日期：{text}')
+
+    # ── 保存 ──
+
+    def save(self, path):
+        self.doc.save(path)

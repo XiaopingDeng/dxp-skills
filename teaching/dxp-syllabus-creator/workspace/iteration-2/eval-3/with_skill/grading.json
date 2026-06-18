@@ -1,0 +1,40 @@
+{
+  "eval_name": "\u8bfe\u7a0b\u8bbe\u8ba1\u7c7b-\u542b\u601d\u653f\u8981\u6c42",
+  "assertions": [
+    {
+      "text": "\u516d\u8282\u7ed3\u6784\u5b8c\u6574",
+      "passed": true,
+      "evidence": "Found"
+    },
+    {
+      "text": "\u5339\u914d\u8bfe\u7a0b\u8bbe\u8ba1\u6a21\u677f",
+      "passed": true,
+      "evidence": "Found"
+    },
+    {
+      "text": "\u5305\u542b\u8bfe\u7a0b\u76ee\u6807\u4e0e\u6bd5\u4e1a\u8981\u6c42\u77e9\u9635",
+      "passed": true,
+      "evidence": "Found"
+    },
+    {
+      "text": "\u5305\u542b\u601d\u653f\u5143\u7d20",
+      "passed": true,
+      "evidence": "Found"
+    },
+    {
+      "text": "\u5305\u542b\u7f16\u5236\u8bf4\u660e",
+      "passed": true,
+      "evidence": "Found"
+    },
+    {
+      "text": "\u6559\u6539\u6458\u8981\u56db\u7ef4\u8986\u76d6",
+      "passed": true,
+      "evidence": "Found"
+    },
+    {
+      "text": "\u65e0emoji",
+      "passed": true,
+      "evidence": "Found"
+    }
+  ]
+}

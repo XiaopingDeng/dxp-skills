@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>dxp-syllabus-creator — Skill Description Optimization</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Lora', Georgia, serif;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            background: #faf9f5;
+            color: #141413;
+        }
+        h1 { font-family: 'Poppins', sans-serif; color: #141413; }
+        .explainer {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #e8e6dc;
+            color: #b0aea5;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+        .summary {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #e8e6dc;
+        }
+        .summary p { margin: 5px 0; }
+        .best { color: #788c5d; font-weight: bold; }
+        .table-container {
+            overflow-x: auto;
+            width: 100%;
+        }
+        table {
+            border-collapse: collapse;
+            background: white;
+            border: 1px solid #e8e6dc;
+            border-radius: 6px;
+            font-size: 12px;
+            min-width: 100%;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #e8e6dc;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        th {
+            font-family: 'Poppins', sans-serif;
+            background: #141413;
+            color: #faf9f5;
+            font-weight: 500;
+        }
+        th.test-col {
+            background: #6a9bcc;
+        }
+        th.query-col { min-width: 200px; }
+        td.description {
+            font-family: monospace;
+            font-size: 11px;
+            word-wrap: break-word;
+            max-width: 400px;
+        }
+        td.result {
+            text-align: center;
+            font-size: 16px;
+            min-width: 40px;
+        }
+        td.test-result {
+            background: #f0f6fc;
+        }
+        .pass { color: #788c5d; }
+        .fail { color: #c44; }
+        .rate {
+            font-size: 9px;
+            color: #b0aea5;
+            display: block;
+        }
+        tr:hover { background: #faf9f5; }
+        .score {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        .score-good { background: #eef2e8; color: #788c5d; }
+        .score-ok { background: #fef3c7; color: #d97706; }
+        .score-bad { background: #fceaea; color: #c44; }
+        .train-label { color: #b0aea5; font-size: 10px; }
+        .test-label { color: #6a9bcc; font-size: 10px; font-weight: bold; }
+        .best-row { background: #f5f8f2; }
+        th.positive-col { border-bottom: 3px solid #788c5d; }
+        th.negative-col { border-bottom: 3px solid #c44; }
+        th.test-col.positive-col { border-bottom: 3px solid #788c5d; }
+        th.test-col.negative-col { border-bottom: 3px solid #c44; }
+        .legend { font-family: 'Poppins', sans-serif; display: flex; gap: 20px; margin-bottom: 10px; font-size: 13px; align-items: center; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-swatch { width: 16px; height: 16px; border-radius: 3px; display: inline-block; }
+        .swatch-positive { background: #141413; border-bottom: 3px solid #788c5d; }
+        .swatch-negative { background: #141413; border-bottom: 3px solid #c44; }
+        .swatch-test { background: #6a9bcc; }
+        .swatch-train { background: #141413; }
+    </style>
+</head>
+<body>
+    <h1>dxp-syllabus-creator — Skill Description Optimization</h1>
+    <div class="explainer">
+        <strong>Optimizing your skill's description.</strong> This page updates automatically as Claude tests different versions of your skill's description. Each row is an iteration — a new description attempt. The columns show test queries: green checkmarks mean the skill triggered correctly (or correctly didn't trigger), red crosses mean it got it wrong. The "Train" score shows performance on queries used to improve the description; the "Test" score shows performance on held-out queries the optimizer hasn't seen. When it's done, Claude will apply the best-performing description to your skill.
+    </div>
+
+    <div class="summary">
+        <p><strong>Original:</strong> 高校课程教学大纲智能编制工具。当用户需要创建、编写、生成、修订各类高校课程教学大纲（包括理论课程、课程设计、实习实训、毕业论文/设计四类教学大纲）时使用。专业名称+课程名称双输入，自动匹配校本模板，深度融合OBE理念、课程思政与数智化赋能要求。适用于教务管理人员和高校教师编制2026版培养方案配套教学大纲的场景。注意：只要用户提到&quot;教学大纲&quot;&quot;课程大纲&quot;&quot;syllabus&quot;&quot;培养方案配套大纲&quot;等关键词就应使用此技能。</p>
+        <p class="best"><strong>Best:</strong> 高校课程教学大纲智能编制工具。当用户需要创建、编写、生成、修订各类高校课程教学大纲（包括理论课程、课程设计、实习实训、毕业论文/设计四类教学大纲）时使用。专业名称+课程名称双输入，自动匹配校本模板，深度融合OBE理念、课程思政与数智化赋能要求。适用于教务管理人员和高校教师编制2026版培养方案配套教学大纲的场景。注意：只要用户提到&quot;教学大纲&quot;&quot;课程大纲&quot;&quot;syllabus&quot;&quot;培养方案配套大纲&quot;等关键词就应使用此技能。</p>
+        <p><strong>Best Score:</strong> 4/8 (test)</p>
+        <p><strong>Iterations:</strong> 5 | <strong>Train:</strong> 12 | <strong>Test:</strong> 8</p>
+    </div>
+
+    <div class="legend">
+        <span style="font-weight:600">Query columns:</span>
+        <span class="legend-item"><span class="legend-swatch swatch-positive"></span> Should trigger</span>
+        <span class="legend-item"><span class="legend-swatch swatch-negative"></span> Should NOT trigger</span>
+        <span class="legend-item"><span class="legend-swatch swatch-train"></span> Train</span>
+        <span class="legend-item"><span class="legend-swatch swatch-test"></span> Test</span>
+    </div>
+
+    <div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Iter</th>
+                <th>Train</th>
+                <th>Test</th>
+                <th class="query-col">Description</th>
+                <th class="positive-col">环境工程专业的《水处理工程课程设计》教学大纲要怎么写？帮我按课程设计的模板生成一份，要有课程目标与毕业要求的对应矩阵</th>
+                <th class="positive-col">会计学专业的毕业实习需要一份实习教学大纲，学生要去企业实习8周</th>
+                <th class="positive-col">我们学院需要为电气工程及其自动化专业编制毕业论文（设计）教学大纲，面向大四学生</th>
+                <th class="positive-col">我是智能科学与技术专业的老师，需要为《机械设计基础》这门课编制一份理论课程教学大纲，按照2026版培养方案的要求来写</th>
+                <th class="positive-col">帮我们计算机科学与技术专业写一份《数据结构与算法》的课程教学大纲，这是理论课，有48学时</th>
+                <th class="negative-col">我们专业要修订2026版人才培养方案，你能帮我看看整体框架怎么设计吗</th>
+                <th class="positive-col">帮我看一下这个《机械原理》教学大纲的示例，然后给我专业的软件工程专业写一份《软件工程导论》的理论课大纲</th>
+                <th class="negative-col">我需要给大二学生出一份《线性代数》的期中考试题，包含矩阵运算和特征值部分</th>
+                <th class="negative-col">帮我排一下下学期的课表，我们计算机系有12门专业课</th>
+                <th class="negative-col">帮我写一份《高等数学》的教案，下周要用的，第一章极限与连续那部分</th>
+                <th class="negative-col">《数据库原理》这门课的课程标准是什么？有没有最新的国家标准可以参考</th>
+                <th class="negative-col">我们学院的教学质量评估报告要怎么写？需要包含哪些模块和数据？</th>
+                <th class="test-col positive-col">教务处的任务：需要生成一份《马克思主义基本原理》课程教学大纲，理论课，3学分，48学时</th>
+                <th class="test-col positive-col">我要修订一下《大学物理》的教学大纲，把原来的内容更新到符合2026版培养方案的要求</th>
+                <th class="test-col positive-col">土木工程专业的《混凝土结构课程设计》需要一份课程设计教学大纲，要求包含OBE理念和课程思政</th>
+                <th class="test-col positive-col">我刚接手《Python程序设计》这门课，需要编写课程教学大纲，这个课是理论+实践的类型，请帮我按照学校最新模板生成</th>
+                <th class="test-col negative-col">我需要写一篇关于机器学习的毕业论文，给我一个提纲</th>
+                <th class="test-col negative-col">我们学院要申请新专业，需要写一份专业申报书，有模板吗</th>
+                <th class="test-col negative-col">帮我查一下《机械原理》这门课的期末考试试卷模板</th>
+                <th class="test-col negative-col">帮我设计一个《计算机网络》课程的实验指导书，要有10个实验项目</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="best-row">
+                <td>1</td>
+                <td><span class="score score-ok">18/36</span></td>
+                <td><span class="score score-ok">12/24</span></td>
+                <td class="description">高校课程教学大纲智能编制工具。当用户需要创建、编写、生成、修订各类高校课程教学大纲（包括理论课程、课程设计、实习实训、毕业论文/设计四类教学大纲）时使用。专业名称+课程名称双输入，自动匹配校本模板，深度融合OBE理念、课程思政与数智化赋能要求。适用于教务管理人员和高校教师编制2026版培养方案配套教学大纲的场景。注意：只要用户提到&quot;教学大纲&quot;&quot;课程大纲&quot;&quot;syllabus&quot;&quot;培养方案配套大纲&quot;等关键词就应使用此技能。</td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+            </tr>
+            <tr class="">
+                <td>2</td>
+                <td><span class="score score-ok">18/36</span></td>
+                <td><span class="score score-ok">12/24</span></td>
+                <td class="description">Use when a user asks to create, write, generate, or revise a 教学大纲 (course syllabus) for a specific university course. Key trigger signals: the user pairs a major/discipline (XX专业) with a course name (often in 《》书名号), and requests a syllabus document. Common query patterns include &#x27;帮XX专业写/编制一份《XX》教学大纲&#x27;, &#x27;XX的《XX》教学大纲要怎么写&#x27;, &#x27;需要一份XX教学大纲&#x27;, &#x27;为XX专业编制XX教学大纲&#x27;. Covers four syllabus types: 理论课程, 课程设计, 实习实训, 毕业论文/设计. Do NOT use for: lesson plans (教案), exam questions (试题/试卷), course scheduling (课表), or training plan framework (培养方案框架).</td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+            </tr>
+            <tr class="">
+                <td>3</td>
+                <td><span class="score score-ok">18/36</span></td>
+                <td><span class="score score-ok">12/24</span></td>
+                <td class="description">Use this skill for any university-related 教学大纲 (course syllabus) request. If a user asks to create, write, generate, revise, or needs help with a 教学大纲 for a Chinese university course — across theory courses (理论课程), course design (课程设计), internship/practice (实习实训), or graduation thesis/design (毕业论文/设计) — this skill applies. Trigger broadly: any mention of 教学大纲 or 课程大纲 in a higher-education context is a strong signal. Do NOT use for: 教案, 试题/试卷, 课表, 培养方案框架.</td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+            </tr>
+            <tr class="">
+                <td>4</td>
+                <td><span class="score score-ok">18/36</span></td>
+                <td><span class="score score-ok">12/24</span></td>
+                <td class="description">Use this skill when a user needs to create, write, or revise a 教学大纲 (course syllabus) for a Chinese university course. The primary trigger is the presence of 教学大纲 or 课程大纲 in the user&#x27;s query. This term indicates the user wants a syllabus document for a specific major and course. Covers four syllabus types: 理论课程, 课程设计, 实习实训, and 毕业论文/设计.</td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+            </tr>
+            <tr class="">
+                <td>5</td>
+                <td><span class="score score-ok">18/36</span></td>
+                <td><span class="score score-ok">12/24</span></td>
+                <td class="description">Use this skill when a user asks to create, write, generate, compile, or revise a 教学大纲 (course syllabus) for a Chinese university course. The core signal is 教学大纲 appearing alongside a major/discipline name (XX专业) and often a course name in 《》。The four syllabus types covered are 理论课程, 课程设计, 实习实训, and 毕业论文/设计. If the user&#x27;s core need is a syllabus document for a higher-education course and major, this skill should activate. Evaluate user intent: are they asking for a 教学大纲? If yes, use this skill.</td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+</body>
+</html>

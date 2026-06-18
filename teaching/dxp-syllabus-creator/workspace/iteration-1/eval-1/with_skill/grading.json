@@ -1,0 +1,40 @@
+{
+  "eval_name": "理论课-无培养方案",
+  "assertions": [
+    {
+      "text": "包含所有六大章节",
+      "passed": false,
+      "evidence": "Not found"
+    },
+    {
+      "text": "包含课程目标与毕业要求对应表",
+      "passed": true,
+      "evidence": "Found in text"
+    },
+    {
+      "text": "包含学时分配汇总表",
+      "passed": false,
+      "evidence": "Not found"
+    },
+    {
+      "text": "过程考核占比30%-50%",
+      "passed": true,
+      "evidence": "Found in text"
+    },
+    {
+      "text": "包含教改摘要四维内容",
+      "passed": true,
+      "evidence": "Found in text"
+    },
+    {
+      "text": "包含编制说明与合规自查",
+      "passed": true,
+      "evidence": "Found in text"
+    },
+    {
+      "text": "生成了docx文件",
+      "passed": true,
+      "evidence": "Found in text"
+    }
+  ]
+}

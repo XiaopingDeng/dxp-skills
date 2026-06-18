@@ -1,0 +1,30 @@
+{
+  "eval_name": "课程设计类-含思政要求",
+  "assertions": [
+    {
+      "text": "匹配课程设计模板",
+      "passed": true,
+      "evidence": "Found in text"
+    },
+    {
+      "text": "包含课程目标与毕业要求矩阵",
+      "passed": true,
+      "evidence": "Found in text"
+    },
+    {
+      "text": "包含思政元素",
+      "passed": true,
+      "evidence": "Found in text"
+    },
+    {
+      "text": "包含编制说明",
+      "passed": true,
+      "evidence": "Found in text"
+    },
+    {
+      "text": "生成了docx文件",
+      "passed": true,
+      "evidence": "Found in text"
+    }
+  ]
+}

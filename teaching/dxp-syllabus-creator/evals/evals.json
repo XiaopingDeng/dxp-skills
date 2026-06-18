@@ -1,0 +1,132 @@
+{
+  "skill_name": "dxp-syllabus-creator",
+  "evals": [
+    {
+      "id": 1,
+      "name": "理-无培养方案",
+      "prompt": "我是一名智能科学与技术专业的老师，需要为《数据结构与算法》这门课编制一份理论课程教学大纲，但我手头暂时没有培养方案文件。请帮我生成一份完整的教学大纲。",
+      "expected_output": "一份完整的理论课程教学大纲Markdown文档，含课程基本信息表、六大章节、编制说明",
+      "assertions": [
+        {
+          "name": "包含课程基本信息表",
+          "description": "大纲开头必须有元数据表（课程编码/名称/学分/学时等）",
+          "assertion": "output contains '课程编码' AND output contains '课程名称' AND output contains '学分' AND output contains '总学时'"
+        },
+        {
+          "name": "六节结构完整",
+          "description": "大纲必须包含全部6节标准结构，不得多也不得少",
+          "assertion": "output contains '一、课程的性质' AND output contains '二、课程教学内容' AND output contains '三、建议教材' AND output contains '四、考核形式' AND output contains '五、有关说明' AND output contains '六、课程建设与改革'"
+        },
+        {
+          "name": "包含课程目标与毕业要求对应表",
+          "description": "必须有课程目标与毕业要求的对应关系表格",
+          "assertion": "output contains '表1' AND output contains '课程目标' AND output contains '毕业要求'"
+        },
+        {
+          "name": "包含学时分配汇总表",
+          "description": "必须有学时分配汇总表",
+          "assertion": "output contains '表2' OR (output contains '学时分配' AND output contains '合计' AND output contains '理论学时')"
+        },
+        {
+          "name": "过程考核占比30%-50%",
+          "description": "过程考核成绩占比必须在30%-50%之间",
+          "assertion": "output contains '过程' AND output contains '%' AND (output contains '30' OR output contains '35' OR output contains '40' OR output contains '45' OR output contains '50')"
+        },
+        {
+          "name": "教改摘要含四维内容",
+          "description": "教改摘要必须包含立德树人、教学思想、教学方法、教学手段",
+          "assertion": "output contains '立德树人' AND output contains '教学思想' AND output contains '教学方法' AND output contains '教学手段'"
+        },
+        {
+          "name": "包含编制说明与合规自查",
+          "description": "末尾必须有编制说明",
+          "assertion": "output contains '编制说明' OR output contains '合规自查'"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "程-混合学时-docx",
+      "prompt": "我是智能科学与技术专业的老师，需要为《计算机网络》这门课编制一份理论课程教学大纲。这门课是专业必修课，3学分，52学时（理论44+实验8），第5学期开课，考核方式为考试。课程支撑毕业要求2（问题分析，H）、要求3（设计/开发方案，M）和要求5（使用现代工具，H）。请严格按照教学大纲模板结构生成大纲，并同时导出docx格式文件。",
+      "expected_output": "一份完整的理论课程教学大纲Markdown文档+一个格式合规的docx文件",
+      "assertions": [
+        {
+          "name": "六节结构完整",
+          "description": "大纲必须包含全部6节标准结构",
+          "assertion": "output contains '一、课程的性质' AND output contains '二、课程教学内容' AND output contains '三、建议教材' AND output contains '四、考核形式' AND output contains '五、有关说明' AND output contains '六、课程建设与改革'"
+        },
+        {
+          "name": "元数据对齐输入",
+          "description": "学分/总学时/理论/实验与输入一致",
+          "assertion": "output contains '3学分' AND output contains '52' AND output contains '44' AND output contains '8'"
+        },
+        {
+          "name": "实验环节单独列出",
+          "description": "实验学时必须作为独立环节在教学内容中列出",
+          "assertion": "output contains '实验一' OR output contains '实验二' OR output contains '实验三' OR output contains '实验四'"
+        },
+        {
+          "name": "工程认证支撑矩阵正确",
+          "description": "必须包含H/M支撑关系与要求2/3/5",
+          "assertion": "output contains '要求2' AND output contains '要求3' AND output contains '要求5' AND output contains 'H' AND output contains 'M'"
+        },
+        {
+          "name": "生成了docx文件",
+          "description": "必须输出docx文件",
+          "assertion": "output contains '.docx' AND output contains '课程教学大纲'"
+        },
+        {
+          "name": "过程考核占比合规",
+          "description": "过程考核应在30%-50%之间",
+          "assertion": "output contains '过程' AND (output contains '30%' OR output contains '35%' OR output contains '40%' OR output contains '45%' OR output contains '50%')"
+        },
+        {
+          "name": "教改摘要四维覆盖",
+          "description": "教改摘要必须完整",
+          "assertion": "output contains '立德树人' AND output contains '教学思想' AND output contains '教学方法' AND output contains '教学手段'"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "设计-含思政要求",
+      "prompt": "我是土木工程专业的老师，需要为《混凝土结构课程设计》这门课编制一份课程设计教学大纲。这是课程设计，2学分，32学时（2周集中进行），面向大三学生。要求融入OBE理念和课程思政元素，要有课程目标与毕业要求的对应矩阵。请严格按照大纲模板结构生成大纲。",
+      "expected_output": "一份完整的课程设计教学大纲Markdown文档，含六大章节和编制说明",
+      "assertions": [
+        {
+          "name": "六节结构完整",
+          "description": "大纲必须包含全部6节标准结构",
+          "assertion": "output contains '一、课程的性质' AND output contains '二、课程教学内容' AND output contains '三、建议教材' AND output contains '四、考核形式' AND output contains '五、有关说明' AND output contains '六、课程建设与改革'"
+        },
+        {
+          "name": "匹配课程设计模板",
+          "description": "内容应包含设计任务/方案设计等课程设计特征",
+          "assertion": "output contains '课程设计' AND (output contains '方案' OR output contains '设计内容' OR output contains '设计任务')"
+        },
+        {
+          "name": "包含课程目标与毕业要求矩阵",
+          "description": "必须有课程目标与毕业要求的对应关系",
+          "assertion": "output contains '课程目标' AND output contains '毕业要求' AND (output contains '表1' OR output contains '支撑' OR output contains '矩阵')"
+        },
+        {
+          "name": "包含思政元素",
+          "description": "必须融入课程思政内容",
+          "assertion": "output contains '思政' OR output contains '立德树人'"
+        },
+        {
+          "name": "包含编制说明",
+          "description": "末尾必须有编制说明",
+          "assertion": "output contains '编制说明' OR output contains '合规自查'"
+        },
+        {
+          "name": "教改摘要四维覆盖",
+          "description": "教改摘要必须完整",
+          "assertion": "output contains '立德树人' AND output contains '教学思想' AND output contains '教学方法' AND output contains '教学手段'"
+        }
+      ],
+      "files": []
+    }
+  ]
+}
