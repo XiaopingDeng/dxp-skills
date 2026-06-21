@@ -88,14 +88,17 @@ def check_figure_table_positions(para_texts):
         fig_m = re.match(r'^(图\s*[\d.]+\s+[\S])', s)
         tbl_m = re.match(r'^(表\s*[\d.]+\s+[\S])', s)
         if fig_m:
-            # Check NEXT paragraph: if next is also empty (image), caption is above image
-            # Check PREV paragraph: if prev is empty, caption is below image
-            prev_empty = i > 0 and not para_texts[i - 1].strip()
-            if prev_empty:
-                issues.append(('图题可能在上方(应为下方)', i, s[:60]))
-        if tbl_m:
+            # 规范: 图下表上，即图题应在图片下方。
+            # 若图片段落(仅含<w:drawing>无<w:t>文本，提取为空)出现在图题之后，
+            # 说明图题在图片上方 = 错误。
             next_empty = i + 1 < len(para_texts) and not para_texts[i + 1].strip()
             if next_empty:
+                issues.append(('图题可能在上方(应为下方)', i, s[:60]))
+        if tbl_m:
+            # 规范: 表上图下，即表题应在表格上方。
+            # 若表格段落出现在表题之前(前一段为空)，说明表题在表格下方 = 错误。
+            prev_empty = i > 0 and not para_texts[i - 1].strip()
+            if prev_empty:
                 issues.append(('表题可能在下方(应为上方)', i, s[:60]))
     return issues
 
@@ -216,7 +219,7 @@ def main():
     print(f'=== 章节字数统计 ===')
     for pidx, title, chars in chapter_ranges:
         ratio = chars / total_chars * 100
-        warn = ' ← ⚠️ 占比异常' if ratio > 40 or (ratio < 5 and chars < 3000 and '章' in title and '小' not in title) else ''
+        warn = ' << [WARNING] 占比异常' if ratio > 40 or (ratio < 5 and chars < 3000 and '章' in title and '小' not in title) else ''
         print(f'  P{pidx} {title}: {chars} 字符 ({ratio:.1f}%){warn}')
     print()
 
@@ -232,7 +235,7 @@ def main():
             ratio_cn_en = len(en_abs_text) / len(ch_abs_text) if len(ch_abs_text) > 0 else 0
             print(f'  中英文摘要长度比: {ratio_cn_en:.2f} (正常约0.6-1.0)')
             if ratio_cn_en < 0.4 or ratio_cn_en > 1.5:
-                print(f'  ⚠️ 中英文摘要长度差异较大，可能信息不对等')
+                print(f'  [WARNING] 中英文摘要长度差异较大，可能信息不对等')
     print()
 
     # Figure/table position check
@@ -270,7 +273,7 @@ def main():
         print(f'  年份分布: {ref_info["year_distribution"]}')
         print(f'  近3年文献: {ref_info["recent_3_years"]} ({ref_info["recent_ratio"]*100:.0f}%)')
         if ref_info["recent_ratio"] < 0.3:
-            print(f'  ⚠️ 近3年文献占比不足30%')
+            print(f'  [WARNING] 近3年文献占比不足30%')
         print()
 
     # Output to full text file
