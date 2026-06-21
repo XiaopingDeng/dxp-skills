@@ -1,6 +1,6 @@
 # dxp-skills
 
-自用技能（Skills）仓库，涵盖论文审核、代码开发、教学研究等场景。推荐使用 **Opencode**（免费模型可用，生态开放）驱动；也支持通过 **CC Switch** 一键切换 API Provider，使用 **DeepSeek V4** 模型。
+自用技能（Skills）仓库，涵盖论文审核、代码开发、教学研究等场景。推荐使用 **Opencode**（免费模型可用，生态开放）驱动；也支持通过 **CC Switch** 一键切换 API Provider。
 
 ## 目录
 
@@ -8,6 +8,7 @@
 - [环境安装](#环境安装)
    - [前置要求](#前置要求)
    - [Step 1: 安装 Node.js 与 npm](#step-1-安装-nodejs-与-npm)
+   - [安装 Python 环境（技能脚本依赖）](#安装-python-环境技能脚本依赖)
    - [Step 2: 安装 AI 工具（推荐 Opencode，可选 Claude Code）](#step-2-安装-ai-工具推荐-opencode可选-claude-code)
   - [Step 3: 获取 DeepSeek API Key](#step-3-获取-deepseek-api-key)
   - [Step 4: 安装并配置 CC Switch](#step-4-安装并配置-cc-switch)
@@ -42,6 +43,7 @@
 |------|------|------|
 | 操作系统 | Windows 11 (22H2+) | 推荐开启 WSL2（可选） |
 | Node.js | ≥ 18.0.0 | LTS 版本推荐 |
+| Python | ≥ 3.10 | 技能脚本运行环境 |
 | Git | ≥ 2.40 | Claude Code 强制依赖；Opencode 可选 |
 | DeepSeek 账号 | 已实名认证 | 如需使用 DeepSeek 模型则需余额 |
 
@@ -63,6 +65,32 @@ npm -v     # 应输出 9.x.x 或更高
 ```bash
 npm config set registry https://registry.npmmirror.com
 ```
+
+### 安装 Python 环境（技能脚本依赖）
+
+> ⚠️ **重要**：`dxp-thesis-reviewer` 和 `dxp-syllabus-creator` 的配套脚本需要 Python 运行环境，安装 Python 后才能正常执行。
+
+1. 访问 [Python 官网](https://www.python.org/downloads/) 下载 3.10+ 版本 (`.exe`)
+2. 双击安装，**务必勾选** `Add python.exe to PATH`（将 Python 加入系统路径）
+3. 打开终端验证：
+
+```bash
+python --version   # 应输出 Python 3.10.x 或更高
+pip --version      # 应输出 pip 版本号
+```
+
+4. 安装脚本所需的 Python 依赖包：
+
+```bash
+pip install python-docx pywin32
+```
+
+| 依赖包 | 用途 | 关联技能 |
+|--------|------|----------|
+| `python-docx` | 生成/操作 .docx 文件 | dxp-thesis-reviewer, dxp-syllabus-creator |
+| `pywin32` | .doc → .docx 格式转换（Word COM 自动化） | dxp-thesis-reviewer |
+
+> 💡 **提示**：如果 `pip` 命令提示未找到，请确认 Step 1 安装 Python 时已勾选 "Add python.exe to PATH"。也可重新运行安装程序并选择 "Modify" 追加该选项。
 
 ### Step 2: 安装 AI 工具（推荐 Opencode，可选 Claude Code）
 
@@ -325,7 +353,9 @@ dxp-skills/
 
 | 问题 | 原因 | 解决方案 |
 |------|------|----------|
+| `python` / `pip` 命令未找到 | Python 未安装或未加入 PATH | 重新安装 Python 并勾选 "Add python.exe to PATH"；或手动将 Python 目录添加到系统环境变量 |
 | `opencode` / `claude` 命令未找到 | npm 全局路径未加入 PATH | 重启终端；或重新安装 Node.js 并勾选 "Add to PATH" |
+| 运行脚本报 `ModuleNotFoundError` | 缺少 Python 依赖包 | 执行 `pip install python-docx pywin32` |
 | 连接超时 / 401 | API Key 错误或网络问题 | 检查 Key 是否正确；确认 Base URL 无多余 `/v1` 后缀 |
 | 切换模型后报错 | 旧会话缓存了旧模型名 | 在 Opencode/Claude Code 中输入 `/model` 重新选择；或退出重进 |
 | CC Switch 启用无效 | 未以正确权限写入配置 | 尝试以管理员身份运行 CC Switch |

@@ -1,13 +1,14 @@
 # dxp-skills
 
-A personal Skills repository covering thesis review, code development, teaching, and research scenarios. **Opencode** (free models, open ecosystem) is recommended as the primary driver; also supports one-click API Provider switching via **CC Switch** to use **DeepSeek V4**.
+A personal Skills repository covering thesis review, code development, teaching, and research scenarios. **Opencode** (free models, open ecosystem) is recommended as the primary driver; also supports one-click API Provider switching via **CC Switch**.
 
 ## Table of Contents
 
 - [Skills](#skills)
 - [Environment Setup](#environment-setup)
-  - [Prerequisites](#prerequisites)
+   - [Prerequisites](#prerequisites)
    - [Step 1: Install Node.js & npm](#step-1-install-nodejs--npm)
+   - [Install Python (Required by Skill Scripts)](#install-python-required-by-skill-scripts)
    - [Step 2: Install AI Tools (Recommended: Opencode, Optional: Claude Code)](#step-2-install-ai-tools-recommended-opencode-optional-claude-code)
   - [Step 3: Get DeepSeek API Key](#step-3-get-deepseek-api-key)
   - [Step 4: Install & Configure CC Switch](#step-4-install--configure-cc-switch)
@@ -42,6 +43,7 @@ More skills are in development. Categories:
 |------|-------------|-------|
 | OS | Windows 11 (22H2+) | WSL2 recommended (optional) |
 | Node.js | ≥ 18.0.0 | LTS version recommended |
+| Python | ≥ 3.10 | Runtime for skill scripts |
 | Git | ≥ 2.40 | Required by Claude Code; optional for Opencode |
 | DeepSeek Account | Verified identity | Only needed if using DeepSeek models |
 
@@ -63,6 +65,32 @@ npm -v     # Should output 9.x.x or higher
 ```bash
 npm config set registry https://registry.npmmirror.com
 ```
+
+### Install Python (Required by Skill Scripts)
+
+> ⚠️ **Important**: The scripts bundled with `dxp-thesis-reviewer` and `dxp-syllabus-creator` require a Python runtime. Install Python before using these skills.
+
+1. Visit [python.org](https://www.python.org/downloads/) and download Python 3.10+ (`.exe`)
+2. Run the installer — **make sure to check** `Add python.exe to PATH`
+3. Verify in terminal:
+
+```bash
+python --version   # Should output Python 3.10.x or higher
+pip --version      # Should output a pip version number
+```
+
+4. Install required Python packages:
+
+```bash
+pip install python-docx pywin32
+```
+
+| Package | Purpose | Used By |
+|---------|---------|---------|
+| `python-docx` | Generate/manipulate .docx files | dxp-thesis-reviewer, dxp-syllabus-creator |
+| `pywin32` | .doc → .docx conversion (Word COM automation) | dxp-thesis-reviewer |
+
+> 💡 **Tip**: If `pip` is not recognized, verify that you checked "Add python.exe to PATH" during installation. You can re-run the installer and choose "Modify" to add it.
 
 ### Step 2: Install AI Tools (Recommended: Opencode, Optional: Claude Code)
 
@@ -327,7 +355,9 @@ dxp-skills/
 
 | Issue | Cause | Solution |
 |-------|-------|----------|
+| `python` / `pip` command not found | Python not installed or not in PATH | Reinstall Python with "Add python.exe to PATH" checked; or manually add Python directory to system environment variables |
 | `opencode` / `claude` command not found | npm global path not in PATH | Restart terminal; or reinstall Node.js with "Add to PATH" checked |
+| Scripts fail with `ModuleNotFoundError` | Missing Python dependencies | Run `pip install python-docx pywin32` |
 | Connection timeout / 401 | Wrong API Key or network issue | Verify the key; ensure Base URL has no trailing `/v1` |
 | Error after model switch | Old session cached the old model name | Run `/model` inside Opencode/Claude Code to reselect; or exit and restart |
 | CC Switch enable not working | Insufficient permissions to write config | Try running CC Switch as Administrator |
