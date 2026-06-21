@@ -23,7 +23,7 @@
 
 | 技能名称 | 分类 | 说明 |
 |----------|------|------|
-| **dxp-thesis-reviewer** | `teaching/` | 本科毕业论文审核与批注：自动体检报告 + OOXML 批注写入，支持 .doc/.docx |
+| **dxp-thesis-reviewer** | `teaching/` | 本科毕业论文审核与批注(v2.1)：自动体检 + 三档批注密度 + AI幻觉术语检测 + OOXML 批注写入 + 答辩问题及参考答案独立文档生成，支持 .doc/.docx |
 | **dxp-syllabus-creator** | `teaching/` | 高校课程教学大纲智能编制：理论课/课程设计/实习实训/毕设四类模板，支持导出格式合规的 .docx |
 
 更多技能正在开发中。分类目录：
@@ -298,6 +298,7 @@ dxp-skills/
 │   │       ├── extract_structure.py # 提取文档结构
 │   │       ├── extract_styles.py    # 提取文档样式
 │   │       ├── find_paragraphs.py   # 查找特定段落
+│   │       ├── generate_defense_docx.py # ⭐ 生成答辩问题及参考答案独立文档 (v2.1)
 │   │       ├── pack_docx.py         # 重新打包 .docx
 │   │       ├── unpack_docx.py       # 解包 .docx
 │   │       ├── validate_keywords.py # 预验证关键词

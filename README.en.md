@@ -23,7 +23,7 @@ A personal Skills repository covering thesis review, code development, teaching,
 
 | Skill | Category | Description |
 |-------|----------|-------------|
-| **dxp-thesis-reviewer** | `teaching/` | Undergrad thesis review & annotation: auto health-check report + OOXML comment injection, supports .doc/.docx |
+| **dxp-thesis-reviewer** | `teaching/` | Undergrad thesis review & annotation (v2.1): auto health-check + 3-level comment density + AI hallucination term detection + OOXML annotation + defense Q&A reference document generation, supports .doc/.docx |
 | **dxp-syllabus-creator** | `teaching/` | University syllabus/course outline intelligent generator: 4 templates (theory/design/internship/thesis), exports compliant .docx |
 
 More skills are in development. Categories:
@@ -300,6 +300,7 @@ dxp-skills/
 │   │       ├── extract_structure.py # Extract document structure
 │   │       ├── extract_styles.py    # Extract document styles
 │   │       ├── find_paragraphs.py   # Find specific paragraphs
+│   │       ├── generate_defense_docx.py # ⭐ Generate defense Q&A reference document (v2.1)
 │   │       ├── pack_docx.py         # Re-pack .docx
 │   │       ├── unpack_docx.py       # Unpack .docx
 │   │       ├── validate_keywords.py # Pre-validate keywords
