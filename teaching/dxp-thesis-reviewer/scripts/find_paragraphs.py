@@ -106,13 +106,14 @@ def main():
     parser.add_argument('--verify', help='Verify a keyword and show match details')
     parser.add_argument('--suggest', type=int, help='Suggest keyword candidates from paragraph index')
     parser.add_argument('--list-empty', action='store_true', help='List empty paragraphs')
+    parser.add_argument('--batch', help='Batch mode: read keywords from a JSON file (key -> list of keywords), output all matches at once')
     args = parser.parse_args()
 
     para_texts = load_paragraphs(args.unpacked)
 
     # Default: show stats
     if not any([args.search, args.fuzzy, args.show is not None, args.range,
-                args.verify, args.suggest is not None, args.list_empty]):
+                args.verify, args.suggest is not None, args.list_empty, args.batch]):
         non_empty = len([p for p in para_texts if p.strip()])
         print(f"Total paragraphs: {len(para_texts)}, non-empty: {non_empty}")
         print(f"Use --search <keyword> to find paragraphs")
@@ -121,6 +122,7 @@ def main():
         print(f"Use --range <N-M> to view a range")
         print(f"Use --verify <keyword> to verify a keyword")
         print(f"Use --suggest <N> to get keyword suggestions")
+        print(f"Use --batch <json-file> for batch keyword search")
         return
 
     if args.search:
@@ -199,6 +201,33 @@ def main():
         print(f"Empty paragraphs: {len(empty)}")
         for i, _ in empty[:20]:
             print(f"  P{i}")
+
+    if args.batch:
+        import json
+        with open(args.batch, 'r', encoding='utf-8') as f:
+            keywords = json.load(f)
+        # keywords can be a list of strings or a dict with "keywords" key
+        if isinstance(keywords, dict):
+            kw_list = keywords.get('keywords', [])
+        else:
+            kw_list = keywords
+
+        print(f"Batch search: {len(kw_list)} keywords\n")
+        for kw in kw_list:
+            matches = search_exact(para_texts, kw)
+            total = len(matches)
+            if total == 0:
+                print(f"[ 0x] \"{kw[:60]}\"")
+            elif total == 1:
+                i, pt = matches[0]
+                display = pt[:80] + ("..." if len(pt) > 80 else "")
+                print(f"[ 1x] \"{kw[:60]}\" \u2192 P{i}: ...{display}...")
+            else:
+                para_ids = ', '.join(f'P{m[0]}' for m in matches[:5])
+                if total > 5:
+                    para_ids += f' (+{total-5} more)'
+                print(f"[{total:3d}x] \"{kw[:60]}\" \u2192 {para_ids}")
+        print(f"\nDone. Use P numbers in comments.json with appropriate 'occ' parameter.")
 
 
 if __name__ == '__main__':

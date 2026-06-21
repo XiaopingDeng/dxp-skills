@@ -7,8 +7,6 @@ import json
 import docx
 from jsonschema import validate, ValidationError
 
-TEMPLATE_PATH = "F:/playground/skills/论文模板.docx"
-
 def get_json_schema():
     """返回样式规则的JSON Schema"""
     return {

@@ -12,8 +12,8 @@
 
 comments.json 格式:
 {
-  "author": "指导教师：邓晓平",
-  "initials": "DXP",
+  "author": "指导教师",
+  "initials": "DS",
   "comments": [
     {
       "id": 0,
@@ -140,7 +140,7 @@ def build_comments_xml(unpacked, comments_data):
             qn('w:id'): str(c['id']),
             qn('w:author'): c['author'],
             qn('w:initials'): c['initials'],
-            qn('w:date'): '2026-06-12T00:00:00Z',
+            qn('w:date'): '2026-01-01T00:00:00Z',
             qn('w16cid:durableId'): durable,
         })
         p = etree.SubElement(cmt, qn('w:p'))
@@ -261,7 +261,7 @@ def main():
     parser.add_argument('unpacked', help='Path to unpacked docx directory')
     parser.add_argument('comments_json', help='Path to comments JSON file')
     parser.add_argument('--author', default='指导教师', help='Comment author name')
-    parser.add_argument('--initials', default='DS', help='Comment author initials')
+    parser.add_argument('--initials', default='T', help='Comment author initials')
     parser.add_argument('--force', action='store_true', help='Continue even if some keywords fail to match')
     args = parser.parse_args()
 

@@ -128,7 +128,25 @@ def main():
     items_path = sys.argv[2]
 
     with open(items_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+        raw_content = f.read()
+    try:
+        data = json.loads(raw_content)
+    except json.JSONDecodeError as e:
+        print(f"  ERROR: Failed to parse {items_path}")
+        print(f"  {e}")
+        # Print surrounding lines for debugging
+        lines = raw_content.split('\n')
+        err_line = e.lineno - 1  # 0-based
+        start = max(0, err_line - 2)
+        end = min(len(lines), err_line + 3)
+        print(f"  Context (lines {start+1}-{end}):")
+        for i in range(start, end):
+            marker = '>>>' if i == err_line else '   '
+            print(f"  {marker} L{i+1}: {lines[i][:120]}")
+        print(f"  HINT: Chinese quotation marks (\"\u201c\" and \"\u201d\") inside JSON string values")
+        print(f"        can be confused with JSON delimiters. Use Unicode escapes (\\u201c, \\u201d)")
+        print(f"        or write JSON via a Python script with ensure_ascii=False.")
+        sys.exit(1)
 
     title = data.get('title', '论文整体结构与总体评价')
     items = data.get('items', [])
