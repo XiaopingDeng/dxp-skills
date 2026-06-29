@@ -1,6 +1,6 @@
 # dxp-skills
 
-自用技能（Skills）仓库，涵盖论文审核、代码开发、教学研究等场景。推荐使用 **Opencode**（免费模型可用，生态开放）驱动；也支持通过 **CC Switch** 一键切换 API Provider。
+自用技能（Skills）仓库，涵盖论文审核、代码开发、教学研究等场景。推荐使用 **Opencode**（生态开放，原生 Windows 支持）驱动；模型优先级：**GLM-5.2**（主力）→ **DeepSeek-V4-Pro** → Opencode 自带限量免费模型（如 `big pickle`、`deepseek-v4-flash`）。
 
 ## 目录
 
@@ -9,11 +9,14 @@
    - [前置要求](#前置要求)
    - [Step 1: 安装 Node.js 与 npm](#step-1-安装-nodejs-与-npm)
    - [安装 Python 环境（技能脚本依赖）](#安装-python-环境技能脚本依赖)
-   - [Step 2: 安装 AI 工具（推荐 Opencode，可选 Claude Code）](#step-2-安装-ai-工具推荐-opencode可选-claude-code)
-  - [Step 3: 获取 DeepSeek API Key](#step-3-获取-deepseek-api-key)
-  - [Step 4: 安装并配置 CC Switch](#step-4-安装并配置-cc-switch)
-  - [Step 5: 验证与使用](#step-5-验证与使用)
-- [技能使用](#技能使用)
+   - [Step 2: 安装 Opencode](#step-2-安装-opencode)
+   - [Step 3: 配置模型](#step-3-配置模型)
+   - [Step 4: 安装与注册技能](#step-4-安装与注册技能)
+- [使用技能](#使用技能)
+   - [dxp-thesis-reviewer 使用方法](#dxp-thesis-reviewer-使用方法)
+   - [dxp-syllabus-creator 使用方法](#dxp-syllabus-creator-使用方法)
+   - [个性化定制](#个性化定制)
+   - [Skills 管理与移除](#skills-管理与移除)
 - [仓库结构](#仓库结构)
 - [常见问题排查](#常见问题排查)
 - [贡献指南](#贡献指南)
@@ -25,7 +28,7 @@
 | 技能名称 | 分类 | 说明 |
 |----------|------|------|
 | **dxp-thesis-reviewer** | `teaching/` | 本科毕业论文审核与批注(v2.1)：自动体检 + 三档批注密度 + AI幻觉术语检测 + OOXML 批注写入 + 答辩问题及参考答案独立文档生成，支持 .doc/.docx |
-| **dxp-syllabus-creator** | `teaching/` | 高校课程教学大纲智能编制：理论课/课程设计/实习实训/毕设四类模板，支持导出格式合规的 .docx |
+| **dxp-syllabus-creator** | `teaching/` | 高校课程教学大纲智能编制（配套 2026 版培养方案）：理论课/课程设计/实习实训/毕业论文（设计）四类模板自动识别；理论课使用含完整评分标准表的示例大纲作模板、替换内容生成 docx 并配套生成课程简介，其余三类按对应模板填充，输出格式合规的 .docx |
 
 更多技能正在开发中。分类目录：
 
@@ -35,7 +38,7 @@
 
 ## 环境安装
 
-> 🚀 本指南面向 Windows 11 环境。**推荐使用 Opencode**（内置免费模型，开箱即用）；也可通过 **CC Switch** 工具实现一键切换 API Provider 为 **DeepSeek V4**，配合 Claude Code 使用。
+> 🚀 本指南面向 Windows 11 环境。推荐使用 **Opencode**（生态开放，原生 Windows 支持）驱动；模型优先级：**GLM-5.2**（主力）→ **DeepSeek-V4-Pro** → Opencode 自带限量免费模型。详见 Step 3。
 
 ### 前置要求
 
@@ -44,10 +47,8 @@
 | 操作系统 | Windows 11 (22H2+) | 推荐开启 WSL2（可选） |
 | Node.js | ≥ 18.0.0 | LTS 版本推荐 |
 | Python | ≥ 3.10 | 技能脚本运行环境 |
-| Git | ≥ 2.40 | Claude Code 强制依赖；Opencode 可选 |
-| DeepSeek 账号 | 已实名认证 | 如需使用 DeepSeek 模型则需余额 |
-
-> ⚠️ **注意**: Claude Code 原生为 CLI 工具，在 Windows 上建议以 **管理员身份** 运行 PowerShell 或 CMD 进行安装和首次配置。Opencode 无此限制。
+| Git | ≥ 2.40 | 可选 |
+| 模型 API Key | GLM-5.2（主力）/ DeepSeek（次选）任一 | 见 Step 3；Opencode 自带免费模型无需 Key |
 
 ### Step 1: 安装 Node.js 与 npm
 
@@ -92,13 +93,11 @@ pip install python-docx pywin32
 
 > 💡 **提示**：如果 `pip` 命令提示未找到，请确认 Step 1 安装 Python 时已勾选 "Add python.exe to PATH"。也可重新运行安装程序并选择 "Modify" 追加该选项。
 
-### Step 2: 安装 AI 工具（推荐 Opencode，可选 Claude Code）
-
-#### 推荐：Opencode 🏆
+### Step 2: 安装 Opencode
 
 [Opencode](https://opencode.ai) 是一个开源、免费的 AI 编码助手 CLI，优势显著：
 
-- ✅ **完全免费**：自带免费模型（无需 API Key 即可使用）；也支持接入 DeepSeek、Claude、GPT、Gemini 等 75+ 模型提供商
+- ✅ **完全免费**：自带限量免费模型（无需 API Key 即可使用）；也支持接入 GLM-5.2、DeepSeek、GPT、Gemini 等 75+ 模型提供商
 - ✅ **生态开放**：支持自定义 Skills、Agents、MCP Server，社区活跃（160K+ GitHub Stars）
 - ✅ **原生 Windows 支持**：可通过 npm/scoop/chocolatey 安装，无需管理员权限
 - ✅ **Skills 兼容**：本仓库所有技能均可直接在 Opencode 中使用
@@ -132,119 +131,23 @@ curl -fsSL https://opencode.ai/install | bash
 opencode --version
 ```
 
-> 💡 **零成本上手**：安装后直接运行 `opencode` 即可使用内置免费模型，无需任何 API Key！
+> 💡 **零成本上手**：安装后直接运行 `opencode` 即可使用自带限量免费模型（如 `big pickle`、`deepseek-v4-flash`），无需任何 API Key！如需更强模型，按 Step 3 接入 `glm-5.2` 或 `deepseek-v4-pro`。
 
-#### 可选：Claude Code
+### Step 3: 配置模型
 
-如果希望使用 Claude Code 官方版本（需 Anthropic 账号付费订阅）：
+本仓库推荐模型优先级（从高到低）：
 
-在 **管理员权限** 的终端中执行：
+| 优先级 | 模型 | 说明 | 获取方式 |
+|:---:|:---|:---|:---|
+| 1 | `glm-5.2` | 主力，长上下文、中文友好 | 参见 [GLM API 文档](https://open.bigmodel.cn/dev/api)，在 Opencode 中以 OpenAI 兼容供应商接入 |
+| 2 | `deepseek-v4-pro` | 次选，1.6T 专家模式 | [DeepSeek 开放平台](https://platform.deepseek.com/) 获取 API Key |
+| 3 | Opencode 自带限量免费模型 | 如 `big pickle`、`deepseek-v4-flash` 等 | 无需配置，开箱即用 |
 
-```bash
-npm install -g @anthropic-ai/claude-code
-```
+> 💡 **接入方式**：在 Opencode 中通过 `/model` 选择已配置的模型；自带免费模型无需 API Key。各模型的 Base URL / API Key 等参数以对应官方 API 文档为准（GLM-5.2 见上表链接，DeepSeek 见其开放平台）。
 
-验证安装：
+### Step 4: 安装与注册技能
 
-```bash
-claude --version
-```
-
-> 💡 **提示**: 如果选择 Claude Code，此时不要直接运行 `claude` 登录官方账号。可通过 CC Switch 绕过官方认证，直接使用 DeepSeek API（见 Step 4）。
-
-### Step 3: 获取 DeepSeek API Key
-
-1. 访问 [DeepSeek 开放平台](https://platform.deepseek.com/) 并登录
-2. 进入 **「API Keys」** 页面 → 点击 **「创建新 Key」**
-3. 复制生成的 Key（格式如 `sk-xxxxxxxx`），妥善保存
-4. 确认账户余额充足（DeepSeek V4 定价极低：输入 ¥1/百万Tokens，输出 ¥3/百万Tokens）
-
-**DeepSeek V4 模型参数参考：**
-
-| 参数 | 值 | 说明 |
-|------|------|------|
-| Base URL | `https://api.deepseek.com` | 官方直连地址 |
-| 专家模式 | `deepseek-v4-pro` | 1.6T |
-| 快速模式 | `deepseek-v4-flash` | 284B |
-| Context Window | 1M Tokens | 超长上下文支持 |
-
-### Step 4: 安装并配置 CC Switch
-
-#### 4.1 下载安装
-
-- GitHub 仓库: [https://github.com/farion1231/cc-switch](https://github.com/farion1231/cc-switch)
-- Releases 下载: [https://github.com/farion1231/cc-switch/releases](https://github.com/farion1231/cc-switch/releases)
-
-Windows 用户选择 `.msi` 安装包（推荐，支持自动更新），双击按向导默认安装即可。
-
-#### 4.2 添加 DeepSeek Provider
-
-1. 启动 CC Switch，进入 **「Claude Code」** 标签页
-2. 点击右上方 **「Add Provider」**（添加供应商）
-3. 在预设列表中选择 **「DeepSeek」**（或手动填写以下信息）：
-
-| 字段 | 填写内容 |
-|------|----------|
-|供应商名称 | `DeepSeek`（自定义名称） |
-|官网链接 | `https://platform.deepseek.com` |
-| API Key | 粘贴 Step 3 获取的 Key，以sk-开头 |
-| Base URL | `https://api.deepseek.com/anthropic` |
-| API 格式 | `Anthropic Messages (原生)` |
-| Model (Sonnet) | `deepseek-v4-flash` | 勾选支持1M
-| Model (Opus) | `deepseek-v4-pro`| 勾选支持1M
-| Model (Fable) | `deepseek-v4-pro`| 勾选支持1M
-| Model (Haiku) | `deepseek-v4-flash`|
-| 默认兜底模型 | `deepseek-v4-flash`|
-
-4. 点击 **「Test Connection」** 测试连通性，显示绿色 ✅ 即表示成功
-5. 点击 **「Save」** 保存配置
-
-#### 4.3 启用 Provider
-
-在 Provider 列表中，找到刚创建的 `DeepSeek`，点击右侧的 **「启用」(Enable)** 按钮。CC Switch 会自动将配置写入 Claude Code 的本地配置文件。
-
-### Step 5: 验证与使用
-
-根据你选择的 AI 工具，按对应方式启动：
-
-#### 方式 A：Opencode（推荐，免配置）
-
-1. 新建一个文件夹，将待审阅论文（支持 doc/docx 格式，不支持 pdf）放入该文件夹下
-2. 在文件资源管理器中，点击顶部的地址栏，输入 `cmd` 回车打开终端，输入：
-
-```cmd
-opencode
-```
-
-3. 进入交互界面后，直接发送一条测试指令即可（内置免费模型开箱即用）：
-
-```
-> Hi
-```
-
-如果正常返回且无报错，说明配置成功！🎉
-
-#### 方式 B：Claude Code（需通过 CC Switch 配置 DeepSeek）
-
-1. 新建一个文件夹，将待审阅论文放入该文件夹下
-2. 在文件资源管理器中，点击顶部的地址栏，输入 `cmd` 回车打开终端，输入：
-
-```cmd
-claude
-```
-
-3. 进入交互界面后，输入 `/model` 确认模型已切换为 `deepseek-v4-pro`
-4. 发送一条测试指令验证：
-
-```
-> Hi
-```
-
-## 技能使用
-
-### 注册技能
-
-将此仓库克隆到本地后，在仓库根目录执行：
+将此仓库克隆到本地后，在仓库根目录执行注册：
 
 ```bash
 # 注册所有技能
@@ -255,53 +158,79 @@ npx skills add ./teaching/dxp-thesis-reviewer
 npx skills add ./teaching/dxp-syllabus-creator
 ```
 
-### 查看已注册技能
+查看已注册技能：
 
 ```bash
 npx skills list
 ```
 
-### 触发技能
+> 💡 注册完成后，即可在 Opencode 交互界面中通过 `/skill-name`（TAB 补全）或自然语言描述触发技能。具体使用见下节。
 
-在 Opencode（或 Claude Code）交互界面中，通过 `/skill-name` 或者自然语言描述即可触发技能。例如：
+## 使用技能
+
+在 Opencode 交互界面中，先输入 `/model` 选择模型（`glm-5.2` / `deepseek-v4-pro` / 自带免费模型均可），再通过 `/skill-name` 或自然语言触发对应技能。两个技能的使用方法分别说明如下。
+
+### dxp-thesis-reviewer 使用方法
+
+本科毕业论文审核与批注，最终生成加入了批注的评审版本 Word 文件。
+
+1. **新建一个文件夹作为工作目录**，将待审阅论文（支持 .doc/.docx 格式，不支持 pdf）放入该文件夹下
+2. 在该文件夹下打开终端：文件资源管理器中点击顶部地址栏，输入 `cmd` 回车，运行：
+
+```cmd
+opencode
+```
+
+3. 进入交互界面后，输入 `/model` 选择模型（推荐 `glm-5.2`）
+4. 触发技能（斜杠命令 + TAB 补全，或自然语言描述）：
 
 ```bash
-# 斜杠命令方式 TAB选择
 /dxp-thesis-reviewer 评审该文件夹下的论文xxxx.docx
 ```
-过程中需要多次授权，最终会在本地目录下生成加入了批注的评审版本word文件
 
-大纲编制也同理：
+5. 过程中需要多次授权，最终会在该工作目录下生成加入了批注的评审版本 Word 文件
+
+### dxp-syllabus-creator 使用方法
+
+高校课程教学大纲智能编制，自动识别课程性质、匹配四类模板，生成 Markdown + .docx 大纲（理论课额外生成课程简介）。
+
+1. **新建一个文件夹作为工作目录**
+2. ⚠️ **运行技能之前**，将**包含工程认证支撑关系的培养方案**（`.docx`）放入该工作目录下（技能会扫描工作目录解析培养方案，提取课程元数据与毕业要求指标点支撑关系）
+3. 在该文件夹下打开终端：文件资源管理器中点击顶部地址栏，输入 `cmd` 回车，运行：
+
+```cmd
+opencode
+```
+
+4. 进入交互界面后，输入 `/model` 选择模型（推荐 `glm-5.2`）
+5. 触发技能（斜杠命令 + TAB 补全，或自然语言描述）：
 
 ```bash
-# 按培养方案生成某课程的教学大纲
 /dxp-syllabus-creator 专业: 机械工程，课程: 机械原理，按该文件夹下的培养方案.docx编写教学大纲
 ```
 
-可以基于评审过程和需求采用 `/skill-creator`（该 Skill 可从 GitHub 仓库一键安装）进行个性化定制迭代，例如:
+6. 技能会先确认教材、考核比重等，再生成大纲；过程中需要多次授权，最终在该工作目录下输出格式合规的 .docx 大纲
+
+> 💡 培养方案中应包含工程认证毕业要求指标点与课程的支撑关系矩阵；若另有独立的工程认证矩阵 xlsx，可一并放入工作目录，技能会优先从中提取细分指标点。
+
+### 个性化定制
+
+可基于评审 / 编制过程与需求，采用 `/skill-creator`（该 Skill 可从 GitHub 仓库一键安装）进行个性化定制迭代，例如：
+
 ```bash
 # 斜杠命令方式 TAB选择
 /skill-creator 基于本次评审过程，对dxp-thesis-reviewer进行完善，支持xxxx，增加xxxx检查...
 ```
 
-### Skills 管理
+### Skills 管理与移除
 
-**Opencode 方式：**
 Opencode 原生支持 Skills 管理：
 
 - 在 Opencode 交互界面中，输入 `/skill` 即可浏览和安装社区 Skills
 - 或使用命令行：`npx skills add .` 注册本地技能
 - 已注册的技能即可通过 `/skill-name` 直接触发
 
-**CC Switch 方式（仅 Claude Code）：**
-CC Switch 还支持统一管理 Skills：
-
-- 在 CC Switch 的 **「Skills」** 标签页中，可从 GitHub 仓库一键安装社区 Skills（如 `/skill-creator`）
-- 也支持从本地 ZIP 文件导入自定义 Skill
-- 安装后在 Claude Code 中即可自动生效，无需额外配置
-- 也可将技能文件夹放到 Claude Code 的 Skill 目录下（通常位于 `C:\Users\admin\.claude\skills`）
-
-### 移除技能
+移除技能：
 
 ```bash
 npx skills remove dxp-thesis-reviewer
@@ -331,17 +260,20 @@ dxp-skills/
 │   │       ├── unpack_docx.py       # 解包 .docx
 │   │       ├── validate_keywords.py # 预验证关键词
 │   │       └── verify_comments.py   # 验证批注完整性
-│   └── dxp-syllabus-creator/        # 高校课程教学大纲智能编制
+│   └── dxp-syllabus-creator/        # 高校课程大纲智能编制（2026版培养方案）
 │       ├── SKILL.md                 # 技能定义文件
-│       ├── dxp-syllabus-creator.skill # 技能包文件
 │       ├── scripts/
-│       │   └── generate_syllabus_docx.py # 生成合规 .docx 大纲
+│       │   └── generate_syllabus_docx.py # docx 生成器（含工具函数）
 │       ├── references/
-│       │   └── 培养方案指导.md       # 培养方案编制参考资料
-│       ├── 1. 理论课程教学大纲的格式.docx  # 理论课模板
+│       │   ├── 培养方案解析指南.md   # 培养方案解析指引
+│       │   └── docx_generation_guide.md # docx 生成详细规则
+│       ├── 示例：机械原理 课程教学大纲.docx # 理论课首选模板（含完整评分标准表）
+│       ├── 1. 理论课程教学大纲的格式.docx  # 理论课备选模板（简版）
 │       ├── 2. 课程设计教学大纲的格式.docx  # 课程设计模板
 │       ├── 3. 实习教学大纲的格式.docx      # 实习实训模板
-│       ├── 5. 毕业论文（设计）教学大纲的格式.docx # 毕设模板
+│       ├── 4. 毕业论文（设计）教学大纲的格式.docx # 毕设模板
+│       ├── 附件2：课程简介模板.doc   # 课程简介结构参考
+│       ├── 附件4：实验项目汇总表.xlsx # 实验项目汇总表参考
 │       └── eval_set.json            # 评测数据集
 ├── .gitignore
 ├── LICENSE
@@ -354,13 +286,15 @@ dxp-skills/
 | 问题 | 原因 | 解决方案 |
 |------|------|----------|
 | `python` / `pip` 命令未找到 | Python 未安装或未加入 PATH | 重新安装 Python 并勾选 "Add python.exe to PATH"；或手动将 Python 目录添加到系统环境变量 |
-| `opencode` / `claude` 命令未找到 | npm 全局路径未加入 PATH | 重启终端；或重新安装 Node.js 并勾选 "Add to PATH" |
+| `opencode` 命令未找到 | npm 全局路径未加入 PATH | 重启终端；或重新安装 Node.js 并勾选 "Add to PATH" |
 | 运行脚本报 `ModuleNotFoundError` | 缺少 Python 依赖包 | 执行 `pip install python-docx pywin32` |
 | 连接超时 / 401 | API Key 错误或网络问题 | 检查 Key 是否正确；确认 Base URL 无多余 `/v1` 后缀 |
-| 切换模型后报错 | 旧会话缓存了旧模型名 | 在 Opencode/Claude Code 中输入 `/model` 重新选择；或退出重进 |
-| CC Switch 启用无效 | 未以正确权限写入配置 | 尝试以管理员身份运行 CC Switch |
+| GLM-5.2 调用报错（模型不存在 / 404） | 模型名或供应商配置错误 | 确认模型名填 `glm-5.2`；按 [GLM API 文档](https://open.bigmodel.cn/dev/api) 核对 Base URL 与鉴权方式 |
+| 切换模型后报错 | 旧会话缓存了旧模型名 | 在 Opencode 中输入 `/model` 重新选择；或退出重进 |
 | 中文乱码 | Windows 终端编码问题 | 执行 `chcp 65001` 切换 UTF-8 编码 |
 | Opencode 无法连接免费模型 | 网络环境限制 | 确保终端可访问外网；或配置代理 `set HTTPS_PROXY=http://127.0.0.1:7890` |
+| dxp-syllabus-creator 找不到培养方案 | 工作目录下无培养方案 .docx | 运行技能前将含工程认证支撑关系的培养方案放入工作目录 |
+| dxp-thesis-reviewer 不识别论文 | 论文为 pdf 或未放入工作目录 | 仅支持 .doc/.docx；将论文放入工作目录后再运行 |
 
 ## 贡献指南
 
@@ -373,10 +307,8 @@ dxp-skills/
 
 - [Opencode 官方网站](https://opencode.ai) — 开源 AI 编码助手，内置免费模型
 - [Opencode GitHub](https://github.com/anomalyco/opencode) — 160K+ Stars，社区活跃
-- [Claude Code 官方文档](https://docs.anthropic.com/en/docs/claude-code)
-- [CC Switch GitHub](https://github.com/farion1231/cc-switch)
-- [DeepSeek 开放平台](https://platform.deepseek.com/)
-- [DeepSeek V4 技术报告](https://arxiv.org/abs/2512.14175)
+- [GLM API 文档](https://open.bigmodel.cn/dev/api) — 主力模型 GLM-5.2 接入说明
+- [DeepSeek 开放平台](https://platform.deepseek.com/) — 次选模型 deepseek-v4-pro 接入平台
 
 ## 许可证
 

@@ -157,42 +157,46 @@ class SyllabusFromTemplate:
                            lecture_hours, lab_hours, practice_hours=0,
                            computer_hours=0, semester='', assessment='',
                            audience='', prerequisites='', followups='',
-                           supervisor=''):
+                           supervisor='', course_type=''):
         """填充理论课程页眉表（9行x11列）。
 
         表结构:
-          R0: 课程编码 | value | 课程名称 | 课程名称(span) | 课程负责人 | value
+          R0: 课程编码 | value | 课程类别 | 课程类别 | 课程性质值(span) | | | 课程负责人 | 课程负责人 | 负责人值 | 负责人值
           R1: 课程名称 | value (全宽合并)
           R2: 英文名称 | value (全宽合并)
-          R3: 学分 | value | | 总学时 | 总学时 | 讲 | 实验 | 实验 | 上机 | 上机 | 实践
+          R3: 学分 | value | | 总学时 | 总学时 | 讲课 | 实验 | 实验 | 上机 | 上机 | 实践
           R4: 执行学期 | value(span) | | value(总学时) | | value(讲) | value(实验) | | value(上机) | | value(实践)
           R5: 考核方式 | value (全宽合并)
           R6: 授课对象 | value (全宽合并)
           R7: 先修课程 | value (全宽合并)
           R8: 后续课程 | value (全宽合并)
+
+        注意：
+        - R0C7-C8 为"课程负责人"标签，禁止覆写。
+        - R0C9-C10 为课程负责人值区，留给用户手工填写，禁止写入。
         """
         t = self.header_table
         if not t or len(t.rows) < 9:
             return
 
         set_c = _set_cell
-        # R0
-        set_c(t.rows[0].cells[1], code)
-        set_c(t.rows[0].cells[2], name)  # span=2
-        set_c(t.rows[0].cells[7], supervisor)
+        # R0 — 仅写入值单元格，不碰标签
+        set_c(t.rows[0].cells[1], code)                    # 编码值
+        set_c(t.rows[0].cells[4], course_type)              # 课程性质值（span=3）
+        # R0C7-C10 课程负责人区域（含标签和值区）禁止写入 —— 跳过
         # R1 — 课程名称全称
         set_c(t.rows[1].cells[1], name, align=WD_ALIGN_PARAGRAPH.LEFT)
         # R2 — 英文名称
         set_c(t.rows[2].cells[1], en_name, align=WD_ALIGN_PARAGRAPH.LEFT)
-        # R3 — 学分值（填在学分下方空单元格，保持表头标签不动）
+        # R3 — 学分值
         set_c(t.rows[3].cells[1], str(credits))
         # R4 — 学时和执行学期
         set_c(t.rows[4].cells[1], semester, align=WD_ALIGN_PARAGRAPH.LEFT)
         set_c(t.rows[4].cells[3], str(total_hours))
         set_c(t.rows[4].cells[5], str(lecture_hours))
-        set_c(t.rows[4].cells[6], str(lab_hours))   # 实验（merged with C7）
-        set_c(t.rows[4].cells[8], str(computer_hours))  # 上机（merged with C9）
-        set_c(t.rows[4].cells[10], str(practice_hours))  # 实践
+        set_c(t.rows[4].cells[6], str(lab_hours))           # 实验（merged with C7）
+        set_c(t.rows[4].cells[8], str(computer_hours))      # 上机（merged with C9）
+        set_c(t.rows[4].cells[10], str(practice_hours))     # 实践
         # R5 — 考核方式
         set_c(t.rows[5].cells[1], assessment, align=WD_ALIGN_PARAGRAPH.LEFT)
         # R6 — 授课对象
@@ -370,3 +374,203 @@ class SyllabusFromTemplate:
 
     def save(self, path):
         self.doc.save(path)
+
+
+# ============================================================
+# 理论课程 docx 替换工具函数
+# 这些函数用于"基于示例大纲替换内容"的策略
+# 适用于理论课程（使用示例：机械原理模板）
+# ============================================================
+
+import copy
+from docx.text.paragraph import Paragraph
+
+# 已知的页眉表标签文字（遇到这些文字的单元格不覆写）
+HEADER_LABELS = {
+    '课程编码', '课程名称', '英文名称', '课程类别', '课程负责人',
+    '学分', '总学时', '讲课', '实验', '上机', '实践',
+    '考核方式', '执行学期', '学生对象', '授课对象', '先修课程', '后续课程',
+}
+
+# Footer 关键词（以这些开头的段落不替换）
+FOOTER_KEYWORDS = ('编 写 人', '审 核 人', '批 准 人', '编写日期')
+
+# 评分等级固定文本
+GRADE_LEVELS = ["优 90-100", "良 80-90", "中 70-80", "及格 60-70", "不及格 0-60"]
+
+
+def add_run_songti(p, text, bold=False, size=Pt(10.5)):
+    """向段落添加 run 并显式设置宋体字体。
+
+    解决 p.clear() 后新 run 不继承模板字体的问题。
+    所有正文段落替换都应使用此函数而非 p.add_run()。
+    """
+    run = p.add_run(text)
+    if bold:
+        run.bold = True
+    run.font.name = FONT_NAME
+    run.font.size = size
+    r_elem = run.element.rPr
+    if r_elem is not None:
+        rFonts = r_elem.find(qn('w:rFonts'))
+        if rFonts is None:
+            rFonts = r_elem.makeelement(qn('w:rFonts'), {})
+            r_elem.append(rFonts)
+        rFonts.set(qn('w:eastAsia'), FONT_NAME)
+    return run
+
+
+def set_cell_font(cell, text, align=WD_ALIGN_PARAGRAPH.CENTER, size=Pt(10.5)):
+    """安全设置单元格文本——先清空再写入，同时设置宋体字体。"""
+    cell.text = ""
+    p = cell.paragraphs[0]
+    p.alignment = align
+    add_run_songti(p, text, size=size)
+
+
+def insert_paragraph_before(ref_p, text, bold=False):
+    """在 ref_p 段落之前插入新段落。
+
+    用于在模板的"……"占位段落之前插入额外章节的
+    基本要求/重点和难点/教学方法段落。
+
+    原理：深拷贝参考段落的 XML 元素，清除内容，
+    用 addprevious 插入到目标位置之前。
+    """
+    new_elem = copy.deepcopy(ref_p._element)
+    # 清除所有 run 子元素
+    for child in list(new_elem):
+        if child.tag.endswith('}r'):
+            new_elem.remove(child)
+    ref_p._element.addprevious(new_elem)
+    new_p = Paragraph(new_elem, ref_p._parent)
+    add_run_songti(new_p, text, bold=bold)
+    return new_p
+
+
+def is_label_cell(cell):
+    """检查单元格是否为标签单元格（不应覆写）。"""
+    txt = cell.text.strip()
+    return txt in HEADER_LABELS or any(label in txt for label in HEADER_LABELS)
+
+
+def is_footer_para(p):
+    """检查段落是否为 footer（不应替换）。"""
+    txt = p.text.strip()
+    return txt.startswith(FOOTER_KEYWORDS)
+
+
+def safe_replace_course_name(doc, old_name, new_name):
+    """安全全局替换课程名称。
+
+    只替换完整课程名称（如"机械原理"→"新课程名"），
+    绝不替换单字或部分名称（如"机械"→"计算机"），
+    避免破坏出版社名称和模板结构术语。
+    """
+    for p in doc.paragraphs:
+        for run in p.runs:
+            if old_name in run.text:
+                run.text = run.text.replace(old_name, new_name)
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for p in cell.paragraphs:
+                    for run in p.runs:
+                        if old_name in run.text:
+                            run.text = run.text.replace(old_name, new_name)
+
+
+def fill_header_table(table, data_map):
+    """填充页眉表，自动保护标签单元格和课程负责人区域。
+
+    data_map: {row_idx: {col_idx: value}} 格式的字典。
+    遍历表格所有单元格，跳过标签单元格和"负责人"区域，
+    仅填充 data_map 中指定的值单元格。
+    """
+    for ri, row in enumerate(table.rows):
+        for ci, cell in enumerate(row.cells):
+            if is_label_cell(cell):
+                continue
+            # 跳过课程负责人区域（包含"负责人"文本的行/列）
+            if '负责人' in cell.text:
+                continue
+            # 检查同行是否有"负责人"标签
+            row_text = ' '.join(c.text.strip() for c in row.cells)
+            if '负责人' in row_text and ci > 0:
+                # 在负责人所在行，跳过值区
+                continue
+            # 填充值
+            if ri in data_map and ci in data_map[ri]:
+                set_cell_font(cell, data_map[ri][ci])
+
+
+def fill_table_from_data(table, data, align_map=None):
+    """用数据数组填充表格。
+
+    data: 二维数组，data[0] 为表头行，data[1:] 为数据行。
+    align_map: {col_idx: WD_ALIGN_PARAGRAPH} 指定每列对齐方式。
+    """
+    if align_map is None:
+        align_map = {}
+    for ri, row_data in enumerate(data):
+        if ri >= len(table.rows):
+            break
+        for ci, val in enumerate(row_data):
+            if ci >= len(table.rows[ri].cells):
+                break
+            align = align_map.get(ci, WD_ALIGN_PARAGRAPH.CENTER)
+            set_cell_font(table.rows[ri].cells[ci], val, align=align)
+
+
+def clear_excess_rows(table, start_row):
+    """清空表格中从 start_row 开始的多余数据行。
+
+    当课程目标数/作业次数少于模板行数时，
+    多余数据行的每个单元格必须清空，否则模板旧内容会残留。
+    """
+    for ri in range(start_row, len(table.rows)):
+        for ci in range(len(table.rows[ri].cells)):
+            table.rows[ri].cells[ci].text = ''
+
+
+def replace_section_body(doc, heading_keyword, body_text):
+    """找到包含 heading_keyword 的段落作为标题，
+    替换其后的第一个段落为 body_text。
+
+    使用文本特征匹配而非固定段落索引。
+    跳过 footer 段落。
+    """
+    for i, p in enumerate(doc.paragraphs):
+        txt = p.text.strip()
+        if is_footer_para(p):
+            continue
+        if heading_keyword in txt:
+            # 替换标题后的第一个段落
+            if i + 1 < len(doc.paragraphs):
+                next_p = doc.paragraphs[i + 1]
+                if not is_footer_para(next_p):
+                    next_p.clear()
+                    add_run_songti(next_p, body_text)
+                    return True
+    return False
+
+
+def adjust_grading_table_widths(table, col0_cm=3.0, col1_cm=2.5, col2_cm=9.0):
+    """调整评分标准表的列宽。"""
+    for row in table.rows:
+        if len(row.cells) >= 3:
+            row.cells[0].width = Cm(col0_cm)
+            row.cells[1].width = Cm(col1_cm)
+            row.cells[2].width = Cm(col2_cm)
+
+
+def adjust_data_table_widths(table, widths_cm):
+    """调整数据对应表的列宽。
+
+    widths_cm: [宽度列表]，如 [2.5, 2.5, 7.0, 2.0]
+    """
+    for row in table.rows:
+        for ci, w in enumerate(widths_cm):
+            if ci < len(row.cells):
+                row.cells[ci].width = Cm(w)
+

@@ -1,6 +1,6 @@
 # dxp-skills
 
-A personal Skills repository covering thesis review, code development, teaching, and research scenarios. **Opencode** (free models, open ecosystem) is recommended as the primary driver; also supports one-click API Provider switching via **CC Switch**.
+A personal Skills repository covering thesis review, code development, teaching, and research scenarios. **Opencode** (open ecosystem, native Windows support) is recommended as the driver; model priority: **GLM-5.2** (primary) → **DeepSeek-V4-Pro** → Opencode's built-in limited free models (e.g., `big pickle`, `deepseek-v4-flash`).
 
 ## Table of Contents
 
@@ -9,11 +9,14 @@ A personal Skills repository covering thesis review, code development, teaching,
    - [Prerequisites](#prerequisites)
    - [Step 1: Install Node.js & npm](#step-1-install-nodejs--npm)
    - [Install Python (Required by Skill Scripts)](#install-python-required-by-skill-scripts)
-   - [Step 2: Install AI Tools (Recommended: Opencode, Optional: Claude Code)](#step-2-install-ai-tools-recommended-opencode-optional-claude-code)
-  - [Step 3: Get DeepSeek API Key](#step-3-get-deepseek-api-key)
-  - [Step 4: Install & Configure CC Switch](#step-4-install--configure-cc-switch)
-  - [Step 5: Verify & Use](#step-5-verify--use)
+   - [Step 2: Install Opencode](#step-2-install-opencode)
+   - [Step 3: Configure Models](#step-3-configure-models)
+   - [Step 4: Install & Register Skills](#step-4-install--register-skills)
 - [Using Skills](#using-skills)
+   - [dxp-thesis-reviewer Usage](#dxp-thesis-reviewer-usage)
+   - [dxp-syllabus-creator Usage](#dxp-syllabus-creator-usage)
+   - [Customization](#customization)
+   - [Skills Management & Removal](#skills-management--removal)
 - [Repository Structure](#repository-structure)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
@@ -25,7 +28,7 @@ A personal Skills repository covering thesis review, code development, teaching,
 | Skill | Category | Description |
 |-------|----------|-------------|
 | **dxp-thesis-reviewer** | `teaching/` | Undergrad thesis review & annotation (v2.1): auto health-check + 3-level comment density + AI hallucination term detection + OOXML annotation + defense Q&A reference document generation, supports .doc/.docx |
-| **dxp-syllabus-creator** | `teaching/` | University syllabus/course outline intelligent generator: 4 templates (theory/design/internship/thesis), exports compliant .docx |
+| **dxp-syllabus-creator** | `teaching/` | University course syllabus/outline intelligent generator (aligned with the 2026 training plan): auto-detects one of 4 template types (theory / course design / internship / graduation thesis); theory courses use a sample syllabus with a complete grading rubric as the template, replacing content to produce .docx plus a companion course-introduction document; the other three types are filled from their respective templates — outputs compliant .docx |
 
 More skills are in development. Categories:
 
@@ -35,7 +38,7 @@ More skills are in development. Categories:
 
 ## Environment Setup
 
-> 🚀 This guide is tailored for **Windows 11**. **Opencode** is recommended (free built-in models, ready to use out of the box); alternatively, use **CC Switch** to swap the API Provider to **DeepSeek V4** for Claude Code.
+> 🚀 This guide is tailored for **Windows 11**. **Opencode** is recommended (open ecosystem, native Windows support); model priority: **GLM-5.2** (primary) → **DeepSeek-V4-Pro** → Opencode's built-in limited free models. See Step 3.
 
 ### Prerequisites
 
@@ -44,10 +47,8 @@ More skills are in development. Categories:
 | OS | Windows 11 (22H2+) | WSL2 recommended (optional) |
 | Node.js | ≥ 18.0.0 | LTS version recommended |
 | Python | ≥ 3.10 | Runtime for skill scripts |
-| Git | ≥ 2.40 | Required by Claude Code; optional for Opencode |
-| DeepSeek Account | Verified identity | Only needed if using DeepSeek models |
-
-> ⚠️ **Note**: Claude Code requires **Administrator** privileges on Windows. Opencode has no such restriction.
+| Git | ≥ 2.40 | Optional |
+| Model API Key | GLM-5.2 (primary) / DeepSeek (secondary), either one | See Step 3; Opencode's built-in free models need no key |
 
 ### Step 1: Install Node.js & npm
 
@@ -92,13 +93,11 @@ pip install python-docx pywin32
 
 > 💡 **Tip**: If `pip` is not recognized, verify that you checked "Add python.exe to PATH" during installation. You can re-run the installer and choose "Modify" to add it.
 
-### Step 2: Install AI Tools (Recommended: Opencode, Optional: Claude Code)
-
-#### Recommended: Opencode 🏆
+### Step 2: Install Opencode
 
 [Opencode](https://opencode.ai) is an open-source, free AI coding assistant CLI with significant advantages:
 
-- ✅ **Completely Free**: Built-in free models (no API Key needed); also supports 75+ providers including DeepSeek, Claude, GPT, Gemini
+- ✅ **Completely Free**: Built-in limited free models (no API Key needed); also supports 75+ providers including GLM-5.2, DeepSeek, GPT, Gemini
 - ✅ **Open Ecosystem**: Supports custom Skills, Agents, MCP Servers; active community (160K+ GitHub Stars)
 - ✅ **Native Windows Support**: Install via npm/scoop/chocolatey, no admin privileges required
 - ✅ **Skills Compatible**: All skills in this repo work directly in Opencode
@@ -132,119 +131,23 @@ Verify installation:
 opencode --version
 ```
 
-> 💡 **Zero-cost start**: Run `opencode` right after installation — the built-in free model works without any API Key!
+> 💡 **Zero-cost start**: Run `opencode` right after installation — the built-in limited free models (e.g., `big pickle`, `deepseek-v4-flash`) work without any API Key! For stronger models, follow Step 3 to connect `glm-5.2` or `deepseek-v4-pro`.
 
-#### Optional: Claude Code
+### Step 3: Configure Models
 
-If you prefer the official Claude Code (requires a paid Anthropic subscription):
+Recommended model priority (highest first):
 
-Run in an **Administrator** terminal:
+| Priority | Model | Notes | How to obtain |
+|:---:|:---|:---|:---|
+| 1 | `glm-5.2` | Primary, long context, Chinese-friendly | See the [GLM API docs](https://open.bigmodel.cn/dev/api); add as an OpenAI-compatible provider in Opencode |
+| 2 | `deepseek-v4-pro` | Secondary, 1.6T expert mode | Get an API Key from the [DeepSeek Platform](https://platform.deepseek.com/) |
+| 3 | Opencode built-in limited free models | e.g., `big pickle`, `deepseek-v4-flash` | No configuration needed, ready out of the box |
 
-```bash
-npm install -g @anthropic-ai/claude-code
-```
+> 💡 **How to connect**: Select a configured model via `/model` in Opencode; the built-in free models need no API Key. For each model's Base URL / API Key and other parameters, refer to its official API docs (GLM-5.2 via the link above, DeepSeek via its platform).
 
-Verify:
+### Step 4: Install & Register Skills
 
-```bash
-claude --version
-```
-
-> 💡 **Tip**: If you choose Claude Code, do NOT run `claude` to log into an official account yet. Use CC Switch to bypass official auth and connect directly to DeepSeek API (see Step 4).
-
-### Step 3: Get DeepSeek API Key
-
-1. Visit the [DeepSeek Platform](https://platform.deepseek.com/) and log in
-2. Go to **"API Keys"** → click **"Create New Key"**
-3. Copy the generated key (format: `sk-xxxxxxxx`) and store it safely
-4. Ensure your account has sufficient credits (DeepSeek V4 pricing: ¥1/1M input tokens, ¥3/1M output tokens)
-
-**DeepSeek V4 Model Reference:**
-
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| Base URL | `https://api.deepseek.com` | Official endpoint |
-| Expert Mode | `deepseek-v4-pro` | 1.6T |
-| Fast Mode | `deepseek-v4-flash` | 284B |
-| Context Window | 1M Tokens | Ultra-long context support |
-
-### Step 4: Install & Configure CC Switch
-
-#### 4.1 Download & Install
-
-- GitHub Repo: [https://github.com/farion1231/cc-switch](https://github.com/farion1231/cc-switch)
-- Releases: [https://github.com/farion1231/cc-switch/releases](https://github.com/farion1231/cc-switch/releases)
-
-Windows users should pick the `.msi` installer (recommended, supports auto-update) and follow the setup wizard.
-
-#### 4.2 Add DeepSeek Provider
-
-1. Launch CC Switch, go to the **"Claude Code"** tab
-2. Click **"Add Provider"** in the top-right corner
-3. Select **"DeepSeek"** from the preset list (or fill in manually):
-
-| Field | Value |
-|-------|-------|
-| Provider Name | `DeepSeek` (custom name) |
-| Website | `https://platform.deepseek.com` |
-| API Key | Paste the key from Step 3 (starts with `sk-`) |
-| Base URL | `https://api.deepseek.com/anthropic` |
-| API Format | `Anthropic Messages (native)` |
-| Model (Sonnet) | `deepseek-v4-flash` | ✔ Support 1M |
-| Model (Opus) | `deepseek-v4-pro` | ✔ Support 1M |
-| Model (Fable) | `deepseek-v4-pro` | ✔ Support 1M |
-| Model (Haiku) | `deepseek-v4-flash` | |
-| Default Fallback Model | `deepseek-v4-flash` | |
-
-4. Click **"Test Connection"** — a green ✅ indicates success
-5. Click **"Save"** to store the configuration
-
-#### 4.3 Enable Provider
-
-Find `DeepSeek` in the Provider list and click the **"Enable"** button on the right. CC Switch will automatically write the configuration to Claude Code's local settings file.
-
-### Step 5: Verify & Use
-
-Depending on your chosen AI tool:
-
-#### Option A: Opencode (recommended, zero config)
-
-1. Create a new folder and place the thesis to be reviewed (supports .doc/.docx; PDF not supported) into it
-2. In File Explorer, click the address bar, type `cmd` and press Enter, then:
-
-```cmd
-opencode
-```
-
-3. Inside the interactive interface, send a test prompt (free model works out of the box):
-
-```
-> Hi
-```
-
-If you get a response without errors, you're all set! 🎉
-
-#### Option B: Claude Code (requires CC Switch + DeepSeek config)
-
-1. Create a new folder and place the thesis into it
-2. In File Explorer, click the address bar, type `cmd` and press Enter, then:
-
-```cmd
-claude
-```
-
-3. Run `/model` to confirm the model is set to `deepseek-v4-pro`
-4. Send a test prompt:
-
-```
-> Hi
-```
-
-## Using Skills
-
-### Register Skills
-
-After cloning this repository, run from the repository root:
+After cloning this repository, register skills from the repository root:
 
 ```bash
 # Register all skills
@@ -255,55 +158,79 @@ npx skills add ./teaching/dxp-thesis-reviewer
 npx skills add ./teaching/dxp-syllabus-creator
 ```
 
-### List Registered Skills
+List registered skills:
 
 ```bash
 npx skills list
 ```
 
-### Trigger a Skill
+> 💡 Once registered, trigger a skill in the Opencode interface via `/skill-name` (TAB to autocomplete) or natural language. See the next section for usage.
 
-In the Opencode (or Claude Code) interactive interface, trigger a skill via slash command (use `TAB` to autocomplete) or natural language:
+## Using Skills
+
+In the Opencode interface, first run `/model` to select a model (`glm-5.2` / `deepseek-v4-pro` / a built-in free model all work), then trigger a skill via `/skill-name` or natural language. Usage for each skill is described separately below.
+
+### dxp-thesis-reviewer Usage
+
+Undergraduate thesis review & annotation; produces a reviewed Word document with comments embedded.
+
+1. **Create a new folder as the working directory** and place the thesis to be reviewed (supports .doc/.docx; PDF not supported) into it
+2. Open a terminal in that folder: in File Explorer, click the address bar, type `cmd` and press Enter, then:
+
+```cmd
+opencode
+```
+
+3. Inside the interactive interface, run `/model` and select a model (recommend `glm-5.2`)
+4. Trigger the skill (slash command + TAB autocomplete, or natural language):
 
 ```bash
-# Slash command — TAB to select
 /dxp-thesis-reviewer Review the thesis xxxx.docx in this folder
 ```
 
-The process requires multiple authorizations along the way. When finished, a reviewed version of the Word document with comments embedded will be generated in the local directory.
+5. The process requires multiple authorizations along the way. When finished, a reviewed Word document with comments embedded will be generated in the working directory
 
-For syllabus generation:
+### dxp-syllabus-creator Usage
+
+University course syllabus generator; auto-detects the course type, matches one of 4 templates, and produces Markdown + .docx syllabi (theory courses also generate a course introduction).
+
+1. **Create a new folder as the working directory**
+2. ⚠️ **Before running the skill**, place the **training plan containing engineering-accreditation support relationships** (`.docx`) into the working directory (the skill scans the working directory, parses the training plan, and extracts course metadata and graduation-requirement indicator support relationships)
+3. Open a terminal in that folder: in File Explorer, click the address bar, type `cmd` and press Enter, then:
+
+```cmd
+opencode
+```
+
+4. Inside the interactive interface, run `/model` and select a model (recommend `glm-5.2`)
+5. Trigger the skill (slash command + TAB autocomplete, or natural language):
 
 ```bash
-# Generate a course syllabus based on a training plan
 /dxp-syllabus-creator Major: Mechanical Engineering, Course: Mechanical Principles, write the syllabus based on the training plan.docx in this folder
 ```
 
-You can iterate on and customize `/dxp-thesis-reviewer` using `/skill-creator` (installable from GitHub community repos with one click). For example:
+6. The skill first confirms the textbook and assessment weights, then generates the syllabus; multiple authorizations are required, and a compliant .docx syllabus is output in the working directory
+
+> 💡 The training plan should include the engineering-accreditation matrix between graduation-requirement indicators and courses. If you have a separate engineering-accreditation matrix xlsx, place it in the working directory too — the skill will preferentially extract fine-grained indicators from it.
+
+### Customization
+
+Iterate on and customize the skills using `/skill-creator` (installable from GitHub community repos with one click) based on a review / generation session. For example:
 
 ```bash
 # Slash command — TAB to select
 /skill-creator Based on this review session, improve dxp-thesis-reviewer to support xxxx, add xxxx checks...
 ```
 
-### Skills Management
+### Skills Management & Removal
 
-**Opencode mode:**
 Opencode natively supports Skills management:
 
 - Type `/skill` in the Opencode interface to browse and install community Skills
 - Or use the CLI: `npx skills add .` to register local skills
 - Registered skills are available via `/skill-name` immediately
 
-**CC Switch mode (Claude Code only):**
-CC Switch also provides unified Skills management:
-
-- In the **"Skills"** tab of CC Switch, install community Skills (e.g., `/skill-creator`) from GitHub repos with one click
-- Import custom Skills from local ZIP files
-- Skills take effect in Claude Code immediately — no extra configuration needed
-- You can also copy skill folders into Claude Code's skills directory (typically located at `C:\Users\admin\.claude\skills`)
-
-### Remove a Skill
+Remove a skill:
 
 ```bash
 npx skills remove dxp-thesis-reviewer
@@ -333,17 +260,20 @@ dxp-skills/
 │   │       ├── unpack_docx.py       # Unpack .docx
 │   │       ├── validate_keywords.py # Pre-validate keywords
 │   │       └── verify_comments.py   # Verify comment integrity
-│   └── dxp-syllabus-creator/        # University syllabus generator
+│   └── dxp-syllabus-creator/        # University syllabus generator (2026 training plan)
 │       ├── SKILL.md                 # Skill definition
-│       ├── dxp-syllabus-creator.skill # Skill package file
 │       ├── scripts/
-│       │   └── generate_syllabus_docx.py # Generate compliant .docx syllabus
+│       │   └── generate_syllabus_docx.py # docx generator (with helpers)
 │       ├── references/
-│       │   └── 培养方案指导.md       # Training plan guidance reference
-│       ├── 1. 理论课程教学大纲的格式.docx  # Theory course template
+│       │   ├── 培养方案解析指南.md   # Training plan parsing guide
+│       │   └── docx_generation_guide.md # Detailed docx generation rules
+│       ├── 示例：机械原理 课程教学大纲.docx # Primary theory template (full grading rubric)
+│       ├── 1. 理论课程教学大纲的格式.docx  # Theory template (lite, fallback)
 │       ├── 2. 课程设计教学大纲的格式.docx  # Course design template
 │       ├── 3. 实习教学大纲的格式.docx      # Internship template
-│       ├── 5. 毕业论文（设计）教学大纲的格式.docx # Thesis template
+│       ├── 4. 毕业论文（设计）教学大纲的格式.docx # Thesis template
+│       ├── 附件2：课程简介模板.doc   # Course-intro structure reference
+│       ├── 附件4：实验项目汇总表.xlsx # Lab project summary reference
 │       └── eval_set.json            # Evaluation dataset
 ├── .gitignore
 ├── LICENSE
@@ -356,13 +286,15 @@ dxp-skills/
 | Issue | Cause | Solution |
 |-------|-------|----------|
 | `python` / `pip` command not found | Python not installed or not in PATH | Reinstall Python with "Add python.exe to PATH" checked; or manually add Python directory to system environment variables |
-| `opencode` / `claude` command not found | npm global path not in PATH | Restart terminal; or reinstall Node.js with "Add to PATH" checked |
+| `opencode` command not found | npm global path not in PATH | Restart terminal; or reinstall Node.js with "Add to PATH" checked |
 | Scripts fail with `ModuleNotFoundError` | Missing Python dependencies | Run `pip install python-docx pywin32` |
 | Connection timeout / 401 | Wrong API Key or network issue | Verify the key; ensure Base URL has no trailing `/v1` |
-| Error after model switch | Old session cached the old model name | Run `/model` inside Opencode/Claude Code to reselect; or exit and restart |
-| CC Switch enable not working | Insufficient permissions to write config | Try running CC Switch as Administrator |
+| GLM-5.2 call fails (model not found / 404) | Wrong model name or provider config | Confirm model name is `glm-5.2`; verify Base URL and auth against the [GLM API docs](https://open.bigmodel.cn/dev/api) |
+| Error after model switch | Old session cached the old model name | Run `/model` inside Opencode to reselect; or exit and restart |
 | Chinese text garbled | Windows terminal encoding issue | Run `chcp 65001` to switch to UTF-8 encoding |
 | Opencode can't connect to free model | Network restrictions | Ensure terminal has internet access; or set proxy `set HTTPS_PROXY=http://127.0.0.1:7890` |
+| dxp-syllabus-creator can't find training plan | No training plan .docx in the working directory | Place a training plan containing engineering-accreditation support relationships into the working directory before running the skill |
+| dxp-thesis-reviewer can't recognize the thesis | The thesis is a PDF or not placed in the working directory | Only .doc/.docx are supported; place the thesis into the working directory before running |
 
 ## Contributing
 
@@ -375,10 +307,8 @@ dxp-skills/
 
 - [Opencode Official Website](https://opencode.ai) — Open-source AI coding assistant with free models
 - [Opencode GitHub](https://github.com/anomalyco/opencode) — 160K+ Stars, active community
-- [Claude Code Official Docs](https://docs.anthropic.com/en/docs/claude-code)
-- [CC Switch GitHub](https://github.com/farion1231/cc-switch)
-- [DeepSeek Platform](https://platform.deepseek.com/)
-- [DeepSeek V4 Technical Report](https://arxiv.org/abs/2512.14175)
+- [GLM API Docs](https://open.bigmodel.cn/dev/api) — Primary model GLM-5.2 integration guide
+- [DeepSeek Platform](https://platform.deepseek.com/) — Secondary model deepseek-v4-pro integration platform
 
 ## License
 

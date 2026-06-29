@@ -1,0 +1,25 @@
+{
+  "eval_name": "设计-含思政要求",
+  "assertions": [
+    {
+      "text": "六节结构完整",
+      "passed": false,
+      "evidence": "Missing '一、课程的性质' (has '一、课程设计的性质和任务') and '二、课程教学内容' (has '二、课程设计教学内容的基本要求、重点和难点及学时分配'); the other four sections are found as substrings"
+    },
+    {
+      "text": "包含课程目标与毕业要求矩阵",
+      "passed": true,
+      "evidence": "Contains '课程目标' (multiple), '毕业要求' (multiple), and '表1 课程目标与毕业要求的对应关系' (line 33)"
+    },
+    {
+      "text": "第五节有实质内容",
+      "passed": true,
+      "evidence": "Contains '五、有关说明' (line 169) and includes '先修' (line 171: '先修衔接') with substantial content about prerequisites"
+    },
+    {
+      "text": "第六节有实质内容",
+      "passed": true,
+      "evidence": "Contains '立德树人' (line 183), '教学思想' (line 187), '教学方法' (line 191), and '教学手段' (line 195) all with substantial content"
+    }
+  ]
+}

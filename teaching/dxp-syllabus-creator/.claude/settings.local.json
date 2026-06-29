@@ -12,7 +12,17 @@
       "Bash(PYTHONUTF8=1 python -c ' *)",
       "Bash(PYTHONUTF8=1 python *)",
       "Bash(xxd)",
-      "Bash(fuser \"G:/AI4ALL/dxp-skills/teaching/dxp-syllabus-creator/dxp-syllabus-creator.skill\")"
+      "Bash(fuser \"G:/AI4ALL/dxp-skills/teaching/dxp-syllabus-creator/dxp-syllabus-creator.skill\")",
+      "Bash(pandoc *)",
+      "Bash(python3 -c ' *)",
+      "Bash(where pandoc *)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Users/admin/AppData/Local/**)",
+      "Bash(python3 -c \"import docx; doc = docx.Document\\('示例：机械原理 课程教学大纲.docx'\\); print\\(len\\(doc.tables\\)\\)\")",
+      "Bash(npm list *)",
+      "Bash(python3 -c \"import docx; print\\('python-docx available'\\)\")",
+      "Bash(python3 *)",
+      "Bash(d:/dev/Python/Python312/python.exe *)"
     ]
   }
 }

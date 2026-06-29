@@ -5,12 +5,17 @@
       "id": 1,
       "name": "理-无培养方案",
       "prompt": "我是一名智能科学与技术专业的老师，需要为《数据结构与算法》这门课编制一份理论课程教学大纲，但我手头暂时没有培养方案文件。请帮我生成一份完整的教学大纲。",
-      "expected_output": "一份完整的理论课程教学大纲Markdown文档，含课程基本信息表、六大章节、编制说明",
+      "expected_output": "一份完整的理论课程教学大纲Markdown文档，含课程基本信息表、六大章节、编制说明，第五节和第六节有实质性内容",
       "assertions": [
         {
           "name": "包含课程基本信息表",
           "description": "大纲开头必须有元数据表（课程编码/名称/学分/学时等）",
           "assertion": "output contains '课程编码' AND output contains '课程名称' AND output contains '学分' AND output contains '总学时'"
+        },
+        {
+          "name": "学时字段独立拆分",
+          "description": "总学时、讲课、实验、上机、实践必须分开为独立的行，不可合并为一个单元格",
+          "assertion": "(output contains '总学时' AND output contains '讲课' AND output contains '实验') AND NOT (output contains '总学时 | 64（讲课48学时') AND NOT (output contains '总学时 | 52（理论44')"
         },
         {
           "name": "六节结构完整",
@@ -25,7 +30,12 @@
         {
           "name": "包含学时分配汇总表",
           "description": "必须有学时分配汇总表",
-          "assertion": "output contains '表2' OR (output contains '学时分配' AND output contains '合计' AND output contains '理论学时')"
+          "assertion": "output contains '表2' OR (output contains '学时分配' AND output contains '合计')"
+        },
+        {
+          "name": "表2课程教学内容含具体知识点",
+          "description": "表2的课程教学内容列必须包含具体知识点（协议名/算法名/模型名/结构名/方法名/原理名），不得只写章节标题",
+          "assertion": "NOT (output contains '表2' AND output contains '| 教学内容') OR (output contains '协议' OR output contains '算法' OR output contains '模型' OR output contains '结构' OR output contains '方法' OR output contains '原理' OR output contains '概念')"
         },
         {
           "name": "过程考核占比30%-50%",
@@ -38,18 +48,33 @@
           "assertion": "output contains '立德树人' AND output contains '教学思想' AND output contains '教学方法' AND output contains '教学手段'"
         },
         {
+          "name": "第五节有实质内容",
+          "description": "五、有关说明必须包含实质性内容（先修衔接/后续承接/开课学期/修读建议），不可为空",
+          "assertion": "output contains '五、有关说明' AND (output contains '先修' OR output contains '衔接' OR output contains '后续' OR output contains '开课学期' OR output contains '修读建议' OR output contains '前置')"
+        },
+        {
+          "name": "第六节四维均有实质内容",
+          "description": "六、课程建设与改革摘要的四个维度都应有结合课程的具体内容，不能是空泛套话",
+          "assertion": "output contains '立德树人' AND output contains '教学思想' AND output contains '教学方法' AND output contains '教学手段'"
+        },
+        {
           "name": "包含编制说明与合规自查",
           "description": "末尾必须有编制说明",
           "assertion": "output contains '编制说明' OR output contains '合规自查'"
+        },
+        {
+          "name": "无emoji",
+          "description": "Markdown中不得出现emoji",
+          "assertion": "NOT (output contains '📋' OR output contains '✅' OR output contains '📌' OR output contains '🔴' OR output contains '🟢' OR output contains '🟡' OR output contains '⚠️')"
         }
       ],
       "files": []
     },
     {
       "id": 2,
-      "name": "程-混合学时-docx",
+      "name": "理-混合学时-docx",
       "prompt": "我是智能科学与技术专业的老师，需要为《计算机网络》这门课编制一份理论课程教学大纲。这门课是专业必修课，3学分，52学时（理论44+实验8），第5学期开课，考核方式为考试。课程支撑毕业要求2（问题分析，H）、要求3（设计/开发方案，M）和要求5（使用现代工具，H）。请严格按照教学大纲模板结构生成大纲，并同时导出docx格式文件。",
-      "expected_output": "一份完整的理论课程教学大纲Markdown文档+一个格式合规的docx文件",
+      "expected_output": "一份完整的理论课程教学大纲Markdown文档+一个格式合规的docx文件，学时字段独立拆分",
       "assertions": [
         {
           "name": "六节结构完整",
@@ -58,13 +83,18 @@
         },
         {
           "name": "元数据对齐输入",
-          "description": "学分/总学时/理论/实验与输入一致",
-          "assertion": "output contains '3学分' AND output contains '52' AND output contains '44' AND output contains '8'"
+          "description": "学分/总学时/理论/实验与输入一致，且分开独立显示",
+          "assertion": "output contains '3' AND output contains '52' AND output contains '44' AND output contains '8' AND NOT (output contains '总学时 | 52（理论44')"
+        },
+        {
+          "name": "学时字段独立拆分",
+          "description": "总学时、讲课、实验、上机、实践必须分开为独立的行",
+          "assertion": "output contains '总学时' AND output contains '讲课' AND output contains '实验' AND NOT (output contains '总学时 | 52（')"
         },
         {
           "name": "实验环节单独列出",
           "description": "实验学时必须作为独立环节在教学内容中列出",
-          "assertion": "output contains '实验一' OR output contains '实验二' OR output contains '实验三' OR output contains '实验四'"
+          "assertion": "output contains '实验一' OR output contains '实验二' OR output contains '实验三' OR output contains '实验四' OR output contains '实验（'"
         },
         {
           "name": "工程认证支撑矩阵正确",
@@ -85,6 +115,16 @@
           "name": "教改摘要四维覆盖",
           "description": "教改摘要必须完整",
           "assertion": "output contains '立德树人' AND output contains '教学思想' AND output contains '教学方法' AND output contains '教学手段'"
+        },
+        {
+          "name": "第五节和第六节有实质内容",
+          "description": "五和六两节不可为空",
+          "assertion": "output contains '五、有关说明' AND output contains '六、课程建设与改革' AND (output contains '先修' OR output contains '衔接' OR output contains '开课学期' OR output contains '智能预习' OR output contains '智慧教学平台' OR output contains '数字化教学' OR output contains '理论 + 实践 + 创新')"
+        },
+        {
+          "name": "表2课程教学内容含具体知识点",
+          "description": "表2的课程教学内容列必须包含具体知识点，不得只写章节标题",
+          "assertion": "NOT (output contains '表2' AND output contains '| 教学内容') OR (output contains '协议' OR output contains '算法' OR output contains '模型' OR output contains '方法' OR output contains '原理' OR output contains '结构')"
         }
       ],
       "files": []
@@ -93,7 +133,7 @@
       "id": 3,
       "name": "设计-含思政要求",
       "prompt": "我是土木工程专业的老师，需要为《混凝土结构课程设计》这门课编制一份课程设计教学大纲。这是课程设计，2学分，32学时（2周集中进行），面向大三学生。要求融入OBE理念和课程思政元素，要有课程目标与毕业要求的对应矩阵。请严格按照大纲模板结构生成大纲。",
-      "expected_output": "一份完整的课程设计教学大纲Markdown文档，含六大章节和编制说明",
+      "expected_output": "一份完整的课程设计教学大纲Markdown文档，含六大章节和编制说明，第五节和第六节有实质性内容",
       "assertions": [
         {
           "name": "六节结构完整",
@@ -124,6 +164,74 @@
           "name": "教改摘要四维覆盖",
           "description": "教改摘要必须完整",
           "assertion": "output contains '立德树人' AND output contains '教学思想' AND output contains '教学方法' AND output contains '教学手段'"
+        },
+        {
+          "name": "第五节有实质内容",
+          "description": "五、有关说明必须包含先修衔接/开课学期等内容",
+          "assertion": "output contains '五、有关说明' AND (output contains '先修' OR output contains '衔接' OR output contains '开课学期' OR output contains '修读' OR output contains '前置')"
+        },
+        {
+          "name": "第六节有实质内容",
+          "description": "六、课程建设与改革摘要四个维度都有实质性论述",
+          "assertion": "output contains '立德树人' AND output contains '教学思想' AND output contains '教学方法' AND output contains '教学手段' AND (output contains '规范' OR output contains '安全' OR output contains '数字化' OR output contains '智慧平台' OR output contains 'AI' OR output contains '理论 + 实践 + 创新')"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "理-指标点描述需从培养方案提取",
+      "prompt": "我是智能科学与技术专业的老师，需要为《计算机网络》这门课（课程编码XD26040008）编制一份理论课程教学大纲。培养方案文件已在我的工作目录中（智能科学与技术 专业培养方案[26版](v260526).docx），同时也有一份独立的工程认证矩阵文件（智能科学与技术 培养方案矩阵[26版](v260526).xlsx）。该课程从矩阵中提取到的支撑关系为：要求2（问题分析，H）具体指标点2.3为H、要求3（设计/开发解决方案，M）具体指标点3.1为M、要求5（使用现代工具，H）具体指标点5.2为H。请严格按照教学大纲模板结构生成完整的大纲，并确保Table 1中的指标点描述文字直接从培养方案的段落中提取（而非自行编造）。",
+      "expected_output": "一份完整的理论课程教学大纲，其中Table 1的指标点列包含从培养方案中提取的原始描述文字，而非自创或模板中的内容",
+      "assertions": [
+        {
+          "name": "指标点描述来源正确",
+          "description": "Table 1中指标点2.3/3.1/5.2的描述文字必须来源于培养方案原始段落，而非自编",
+          "assertion": "output contains '2.3' AND output contains '5.2' AND output contains '3.1' AND (output contains '获取信息' OR output contains '进行分析' OR output contains '检索、获取信息')"
+        },
+        {
+          "name": "支撑关系矩阵正确",
+          "description": "H/M/L支撑关系必须与矩阵文件提取结果一致",
+          "assertion": "output contains '要求2' AND output contains '要求3' AND output contains '要求5' AND (output contains 'H' AND output contains 'M')"
+        },
+        {
+          "name": "元数据对齐培养方案",
+          "description": "课程编码XD26040008、学时52、学分3必须与培养方案一致",
+          "assertion": "output contains 'XD26040008' AND output contains '52' AND output contains '3' AND output contains '计算机网络'"
+        },
+        {
+          "name": "表2课程教学内容含具体知识点",
+          "description": "表2的课程教学内容列必须包含具体知识点",
+          "assertion": "NOT (output contains '表2' AND output contains '| 教学内容') OR (output contains '协议' OR output contains '算法' OR output contains '模型' OR output contains '方法' OR output contains '原理')"
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "理论-第一节标题一致性",
+      "prompt": "我的专业是智能科学与技术，正在为《数据结构与算法》这门学科基础必修课编制理论课程教学大纲。请生成一份完整的教学大纲Markdown文档，要求第一节标题为'一、课程的性质、任务和目标'（因为这是理论课程），并且在下文的'六、课程建设与改革摘要'中四个维度都有实质性内容。",
+      "expected_output": "一个完整的理论课程教学大纲Markdown文档，第一节标题正确为'一、课程的性质、任务和目标'",
+      "assertions": [
+        {
+          "name": "第一节标题为理论课程标准标题",
+          "description": "理论课程第一节标题必须是'一、课程的性质、任务和目标'",
+          "assertion": "output contains '一、课程的性质、任务和目标'"
+        },
+        {
+          "name": "六节结构完整",
+          "description": "大纲必须包含全部6节标准结构",
+          "assertion": "output contains '一、课程的性质' AND output contains '二、课程教学内容' AND output contains '三、建议教材' AND output contains '四、考核形式' AND output contains '五、有关说明' AND output contains '六、课程建设与改革'"
+        },
+        {
+          "name": "教改摘要四维覆盖",
+          "description": "课程建设与改革摘要必须包含四维内容",
+          "assertion": "output contains '立德树人' AND output contains '教学思想' AND output contains '教学方法' AND output contains '教学手段'"
+        },
+        {
+          "name": "表2课程教学内容含具体知识点",
+          "description": "表2的课程教学内容列必须包含具体知识点",
+          "assertion": "NOT (output contains '表2' AND output contains '| 教学内容') OR (output contains '结构' OR output contains '算法' OR output contains '模型' OR output contains '方法' OR output contains '原理')"
         }
       ],
       "files": []

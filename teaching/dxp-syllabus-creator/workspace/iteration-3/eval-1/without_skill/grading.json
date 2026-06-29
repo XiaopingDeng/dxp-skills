@@ -1,0 +1,69 @@
+{
+  "eval_name": "理-无培养方案",
+  "assertions": [
+    {
+      "text": "包含课程基本信息表 - output contains '课程编码' AND output contains '课程名称' AND output contains '学分' AND output contains '总学时'",
+      "passed": false,
+      "evidence": "Output contains '课程名称' (line 9), '学分' (line 17), '总学时' (line 14), but uses '课程代码' (line 10) instead of '课程编码'. The required term '课程编码' does not appear anywhere in the output."
+    },
+    {
+      "text": "学时字段独立拆分 - (output contains '总学时' AND output contains '讲课' AND output contains '实验') AND NOT (output contains '总学时 | 64（讲课48学时') AND NOT (output contains '总学时 | 52（理论44')",
+      "passed": false,
+      "evidence": "Contains '总学时' (line 14) but uses '理论学时' (line 15) not '讲课'. Does not contain the word '讲课' anywhere. The forbidden patterns are absent, but the required '讲课' field is missing."
+    },
+    {
+      "text": "六节结构完整 - output contains '一、课程的性质' AND '二、课程教学内容' AND '三、建议教材' AND '四、考核形式' AND '五、有关说明' AND '六、课程建设与改革'",
+      "passed": false,
+      "evidence": "Uses a different section numbering and naming scheme. Section headers found: '一、课程基本信息', '二、课程性质与定位', '四、课程内容与学时分配', '五、教材与参考资料', '六、考核方式与成绩评定', '七、教学方法与手段', '十、其他说明'. None of the six exact required headers ('一、课程的性质', '二、课程教学内容', '三、建议教材', '四、考核形式', '五、有关说明', '六、课程建设与改革') match."
+    },
+    {
+      "text": "第五节有实质内容 - output contains '五、有关说明' AND (output contains '先修' OR output contains '衔接' OR output contains '开课学期' OR output contains '修读建议' OR output contains '前置')",
+      "passed": false,
+      "evidence": "'五、有关说明' does not appear in the output. The without-skill output uses '十、其他说明' as its final说明 section. While '先修课程' appears on line 18, the required section header '五、有关说明' is absent."
+    },
+    {
+      "text": "第六节四维均有实质内容 - output contains '立德树人' AND output contains '教学思想' AND output contains '教学方法' AND output contains '教学手段' AND (output contains '规范' OR output contains '安全' OR output contains '数字化' OR output contains '智慧平台' OR output contains 'AI' OR output contains '理论 + 实践 + 创新' OR output contains '课前' OR output contains '课中' OR output contains '课后')",
+      "passed": false,
+      "evidence": "Contains '教学方法' (line 192) and '教学手段' (line 198), but does not contain '立德树人' or '教学思想' anywhere. Has a section '八、课程思政融入点' (contains思政 terms) and '七、教学方法与手段', but the exact four-dimension structure (立德树人/教学思想/教学方法/教学手段) required by the assertion is absent."
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 5,
+    "total": 5,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "output_chars": 14741,
+    "transcript_chars": 0
+  },
+  "claims": [
+    {
+      "claim": "Uses 10-section structure instead of 6-section",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Output has sections 一 through 十 with different naming than the standard 6-section template"
+    },
+    {
+      "claim": "Includes course思政融入点 table",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Line 208: '## 八、课程思政融入点' with a structured table mapping content to思政 points"
+    },
+    {
+      "claim": "Includes detailed教学进度安排 table",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Line 222-242: '## 九、教学进度安排' with week-by-week schedule"
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "包含课程基本信息表",
+        "reason": "检查 '课程编码' 对无 skill 的自有格式可能过于严格——无 skill 输出用了 '课程代码'（同样意思）。但这也是 skill 标准化价值所在，所以该断言仍然有效。"
+      }
+    ],
+    "overall": "所有断言都正确地检测到无 skill 输出未能遵循规定的六节结构及特定字段命名。这些断言有效地衡量了 skill 的标准化价值。"
+  }
+}

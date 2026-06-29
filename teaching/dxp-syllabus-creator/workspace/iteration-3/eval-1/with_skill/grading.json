@@ -1,0 +1,69 @@
+{
+  "eval_name": "理-无培养方案",
+  "assertions": [
+    {
+      "text": "包含课程基本信息表 - output contains '课程编码' AND output contains '课程名称' AND output contains '学分' AND output contains '总学时'",
+      "passed": true,
+      "evidence": "Line 3: '| 课程编码 | DS202601 | 课程名称 | 数据结构与算法 |', Line 5: '学分 | 3.5', Line 6: '| 总学时 | 64 | 讲课 | 48 |'"
+    },
+    {
+      "text": "学时字段独立拆分 - (output contains '总学时' AND output contains '讲课' AND output contains '实验') AND NOT (output contains '总学时 | 64（讲课48学时') AND NOT (output contains '总学时 | 52（理论44')",
+      "passed": false,
+      "evidence": "Primary table (line 6-8) has independent fields. However, the compliance self-report table at line 288 contains '| 总学时 | 64（讲课48学时，上机16学时） |' which matches the forbidden pattern '总学时 | 64（讲课48学时', violating the NOT condition."
+    },
+    {
+      "text": "六节结构完整 - output contains '一、课程的性质' AND '二、课程教学内容' AND '三、建议教材' AND '四、考核形式' AND '五、有关说明' AND '六、课程建设与改革'",
+      "passed": true,
+      "evidence": "Line 11: '一、课程的性质、任务和目标', Line 37: '二、课程教学内容的基本要求、重点和难点及学时分配', Line 147: '三、建议教材与学习资源', Line 175: '四、考核形式与成绩构成', Line 239: '五、有关说明', Line 253: '六、课程建设与改革摘要'"
+    },
+    {
+      "text": "第五节有实质内容 - output contains '五、有关说明' AND (output contains '先修' OR output contains '衔接' OR output contains '开课学期' OR output contains '修读建议' OR output contains '前置')",
+      "passed": true,
+      "evidence": "Line 239: '五、有关说明'; Line 241: '先修衔接'; Line 247: '开课学期建议'; Line 247: '修读建议'; Line 241: '前置知识基础'"
+    },
+    {
+      "text": "第六节四维均有实质内容 - output contains '立德树人' AND output contains '教学思想' AND output contains '教学方法' AND output contains '教学手段' AND (output contains '规范' OR output contains '安全' OR output contains '数字化' OR output contains '智慧平台' OR output contains 'AI' OR output contains '理论 + 实践 + 创新' OR output contains '课前' OR output contains '课中' OR output contains '课后')",
+      "passed": true,
+      "evidence": "Line 255: '立德树人', Line 259: '教学思想', Line 263: '教学方法', Line 267: '教学手段'; Contains '规范' (line 19), 'AI' (line 264), '课前' (line 269), '课中' (line 269), '课后' (line 269), '智慧平台' (line 269)"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8
+  },
+  "execution_metrics": {
+    "output_chars": 26277,
+    "transcript_chars": 0
+  },
+  "claims": [
+    {
+      "claim": "学时分配表与总学时一致",
+      "type": "factual",
+      "verified": true,
+      "evidence": "学时分配汇总表 (line 135-145): 讲课48 + 上机16 = 合计64, matches the declared 总学时64"
+    },
+    {
+      "claim": "四维（立德树人、教学思想、教学方法、教学手段）均已生成实质性内容，字数均超过150字",
+      "type": "quality",
+      "verified": true,
+      "evidence": "Each of the four subsections under 六 has multiple substantive paragraphs with course-specific content. 立德树人 section is ~190 chars, 教学思想 ~230 chars, 教学方法 ~200 chars, 教学手段 ~200 chars (Chinese character counts)."
+    },
+    {
+      "claim": "匹配模板：理论课程模板",
+      "type": "factual",
+      "verified": true,
+      "evidence": "Line 301: '匹配模板：示例：机械原理 课程教学大纲.docx（理论课程模板）'"
+    }
+  ],
+  "eval_feedback": {
+    "suggestions": [
+      {
+        "assertion": "学时字段独立拆分",
+        "reason": "The NOT condition's forbidden pattern appears in the compliance self-report section (line 288), not in the primary table. This is a false negative — the primary table correctly splits the fields. Consider scoping the assertion to the primary metadata table, or using a different pattern that excludes the compliance section."
+      }
+    ],
+    "overall": "Assertion 2 produces a technically-correct FAIL because the compliance appendix re-summarizes the学时 fields in a collapsed cell. The primary table passes. Consider tightening the assertion scope to avoid this edge case."
+  }
+}

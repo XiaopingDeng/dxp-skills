@@ -1,0 +1,25 @@
+{
+  "eval_name": "设计-含思政要求",
+  "assertions": [
+    {
+      "text": "六节结构完整",
+      "passed": false,
+      "evidence": "Missing all six required section headings: '一、课程的性质', '二、课程教学内容', '三、建议教材', '四、考核形式', '五、有关说明', '六、课程建设与改革' - document uses '二、课程性质与任务', '四、课程内容与学时分配', '五、教学方法与手段', '六、课程考核与评价方式', '七、课程思政融入设计', '八、课程资源与参考资料', '九、其他说明' instead"
+    },
+    {
+      "text": "包含课程目标与毕业要求矩阵",
+      "passed": true,
+      "evidence": "Contains '课程目标' (multiple), '毕业要求' (multiple), and '课程目标与毕业要求对应矩阵' with ●/○ matrix (line 56)"
+    },
+    {
+      "text": "第五节有实质内容",
+      "passed": false,
+      "evidence": "Does not contain '五、有关说明'; section five is '五、教学方法与手段' which covers teaching methods, not the required prerequisite/registration information"
+    },
+    {
+      "text": "第六节有实质内容",
+      "passed": false,
+      "evidence": "Does not contain '立德树人' or '教学思想'; section six is '六、课程考核与评价方式' about assessment, not the required reform section with these four keywords"
+    }
+  ]
+}

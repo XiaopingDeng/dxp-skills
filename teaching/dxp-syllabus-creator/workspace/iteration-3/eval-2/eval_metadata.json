@@ -1,0 +1,22 @@
+{
+  "eval_id": 2,
+  "eval_name": "theory-mixed-hours-docx",
+  "prompt": "I am a teacher of Intelligent Science and Technology, need to create a syllabus for Computer Networks. 3 credits, 52 hours (44 lecture + 8 lab), semester 5, exam. Supports graduation requirements 2(H), 3(M), 5(H). Generate syllabus and docx.",
+  "assertions": [
+    {
+      "name": "six-sections",
+      "description": "All 6 sections present",
+      "assertion": "output contains '一、课程' AND output contains '二、课程教学内容' AND output contains '三、建议教材' AND output contains '四、考核形式' AND output contains '五、有关说明' AND output contains '六、课程建设与改革'"
+    },
+    {
+      "name": "hours-split",
+      "description": "Hours as separate rows",
+      "assertion": "output contains '总学时' AND output contains '讲课' AND output contains '实验' AND NOT (output contains '总学时 | 52（')"
+    },
+    {
+      "name": "sections-5-6-substantive",
+      "description": "Sections 5 and 6 not empty",
+      "assertion": "output contains '五、有关说明' AND (output contains '先修' OR output contains '衔接' OR output contains '开课学期' OR output contains '修读') AND output contains '立德树人' AND output contains '教学思想' AND output contains '教学手段'"
+    }
+  ]
+}

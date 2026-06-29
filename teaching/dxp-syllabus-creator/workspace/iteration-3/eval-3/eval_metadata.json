@@ -1,0 +1,27 @@
+{
+  "eval_id": 3,
+  "eval_name": "design-ideological",
+  "prompt": "I am a civil engineering teacher, need to create a course design syllabus for Concrete Structure Course Design. 2 credits, 32 hours (2 weeks), juniors. Include OBE and ideological-political elements.",
+  "assertions": [
+    {
+      "name": "six-sections",
+      "description": "All 6 sections present",
+      "assertion": "output contains '一、课程' AND output contains '二、课程教学内容' AND output contains '三、建议教材' AND output contains '四、考核形式' AND output contains '五、有关说明' AND output contains '六、课程建设与改革'"
+    },
+    {
+      "name": "grad-req-matrix",
+      "description": "Course objectives to graduation requirements matrix",
+      "assertion": "output contains '课程目标' AND output contains '毕业要求' AND (output contains '表1' OR output contains '支撑' OR output contains '矩阵')"
+    },
+    {
+      "name": "section5-substantive",
+      "description": "Section 5 not empty",
+      "assertion": "output contains '五、有关说明' AND (output contains '先修' OR output contains '衔接' OR output contains '开课学期' OR output contains '修读' OR output contains '前置')"
+    },
+    {
+      "name": "section6-substantive",
+      "description": "Section 6 four dimensions all substantive",
+      "assertion": "output contains '立德树人' AND output contains '教学思想' AND output contains '教学方法' AND output contains '教学手段'"
+    }
+  ]
+}

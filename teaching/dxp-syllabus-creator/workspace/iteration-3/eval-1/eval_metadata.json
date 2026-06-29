@@ -1,0 +1,32 @@
+{
+  "eval_id": 1,
+  "eval_name": "theory-no-plan",
+  "prompt": "I am a teacher of Intelligent Science and Technology, need to create a syllabus for Data Structures and Algorithms. I don't have the training plan file. Please generate a complete syllabus.",
+  "assertions": [
+    {
+      "name": "has-meta-table",
+      "description": "Metadata table at start",
+      "assertion": "output contains '课程编码' AND output contains '课程名称' AND output contains '学分' AND output contains '总学时'"
+    },
+    {
+      "name": "hours-split",
+      "description": "Total hours, lecture, lab, computer, practice as separate rows",
+      "assertion": "(output contains '总学时' AND output contains '讲课' AND output contains '实验') AND NOT (output contains '总学时 | 64（讲课48学时') AND NOT (output contains '总学时 | 52（理论44')"
+    },
+    {
+      "name": "six-sections",
+      "description": "All 6 sections present",
+      "assertion": "output contains '一、课程' AND output contains '二、课程教学内容' AND output contains '三、建议教材' AND output contains '四、考核形式' AND output contains '五、有关说明' AND output contains '六、课程建设与改革'"
+    },
+    {
+      "name": "section5-substantive",
+      "description": "Section 5 has substantive content",
+      "assertion": "output contains '五、有关说明' AND (output contains '先修' OR output contains '衔接' OR output contains '开课学期' OR output contains '修读建议' OR output contains '前置')"
+    },
+    {
+      "name": "section6-substantive",
+      "description": "Section 6 four dimensions all substantive",
+      "assertion": "output contains '立德树人' AND output contains '教学思想' AND output contains '教学方法' AND output contains '教学手段'"
+    }
+  ]
+}
