@@ -21,18 +21,25 @@ from docx.oxml import parse_xml
 # ============================================================
 # 常量
 # ============================================================
-FONT_NAME = '宋体'
+FONT_NAME = '宋体'           # 中文字体（eastAsia）
+WESTERN_FONT = 'Times New Roman'  # 西文字体（ascii）
+HEITI_FONT = '黑体'          # 标题中文字体
 FONT_SIZE = Pt(12)
 NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 
 
-def _make_run(run, text, bold=False, size=None, font_name=None):
-    """统一设置 run 属性"""
+def _make_run(run, text, bold=False, size=None, font_name=None, east_asia=None):
+    """统一设置 run 属性。
+    
+    默认西文字体 Times New Roman、中文字体宋体，与参考模板一致。
+    节标题等需用黑体时传 east_asia='黑体'。
+    """
     run.text = text
     run.bold = bold
     run.font.size = size or FONT_SIZE
-    run.font.name = font_name or FONT_NAME
-    run.element.rPr.rFonts.set(qn('w:eastAsia'), font_name or FONT_NAME)
+    run.font.name = font_name or WESTERN_FONT
+    ea = east_asia or FONT_NAME
+    run.element.rPr.rFonts.set(qn('w:eastAsia'), ea)
 
 
 def _set_cell(cell, text, bold=False, align=WD_ALIGN_PARAGRAPH.CENTER):
@@ -50,9 +57,9 @@ def _shade(cell, color='D5E8F0'):
 
 
 def _new_para_elem():
-    """创建空白段落 XML 元素"""
+    """创建空白段落 XML 元素（西文 Times New Roman，中文宋体）"""
     return parse_xml(
-        f'<w:p xmlns:w="{NS}"><w:r><w:rPr><w:rFonts w:eastAsia="{FONT_NAME}"/>'
+        f'<w:p xmlns:w="{NS}"><w:r><w:rPr><w:rFonts w:ascii="{WESTERN_FONT}" w:eastAsia="{FONT_NAME}"/>'
         f'<w:sz w:val="24"/></w:rPr><w:t></w:t></w:r></w:p>')
 
 
@@ -84,7 +91,7 @@ class SyllabusFromTemplate:
 
     def _setup_style(self):
         s = self.doc.styles['Normal']
-        s.font.name = FONT_NAME
+        s.font.name = WESTERN_FONT
         s.font.size = FONT_SIZE
         s.element.rPr.rFonts.set(qn('w:eastAsia'), FONT_NAME)
         s.paragraph_format.line_spacing = 1.25
@@ -229,22 +236,22 @@ class SyllabusFromTemplate:
     # ── 标题 ──
 
     def set_title(self, text):
-        """替换文档标题（P0）"""
+        """替换文档标题（P0）。标题格式：课程名称 + 空格 + 课程教学大纲"""
         p = self.doc.paragraphs[0]
         self._clear_para(p)
         run = p.runs[0] if p.runs else p.add_run()
-        _make_run(run, text + '（宋体：四号黑体、加粗）', bold=True)
+        _make_run(run, text, bold=True, east_asia=HEITI_FONT)
 
     # ── 节标题 ──
 
     def set_section(self, index, text):
-        """替换第 index 节标题（0=第一节）。"""
+        """替换第 index 节标题（0=第一节）。节标题使用黑体。"""
         p = self.sections.get(index)
         if p is None:
             return
         self._clear_para(p)
         run = p.runs[0] if p.runs else p.add_run()
-        _make_run(run, text, bold=True, size=Pt(14))
+        _make_run(run, text, bold=True, size=Pt(14), east_asia=HEITI_FONT)
 
     # ── 内容插入 ──
 
@@ -297,7 +304,7 @@ class SyllabusFromTemplate:
             run = p.add_run(h)
             run.bold = True
             run.font.size = FONT_SIZE
-            run.font.name = FONT_NAME
+            run.font.name = WESTERN_FONT
             run.element.rPr.rFonts.set(qn('w:eastAsia'), FONT_NAME)
             _shade(cell)
 
@@ -310,7 +317,7 @@ class SyllabusFromTemplate:
                 p.alignment = align
                 run = p.add_run(text)
                 run.font.size = FONT_SIZE
-                run.font.name = FONT_NAME
+                run.font.name = WESTERN_FONT
                 run.element.rPr.rFonts.set(qn('w:eastAsia'), FONT_NAME)
                 # 合计行加粗
                 if ri == len(rows) - 1:
@@ -395,20 +402,21 @@ HEADER_LABELS = {
 # Footer 关键词（以这些开头的段落不替换）
 FOOTER_KEYWORDS = ('编 写 人', '审 核 人', '批 准 人', '编写日期')
 
-# 评分等级固定文本
-GRADE_LEVELS = ["优 90-100", "良 80-90", "中 70-80", "及格 60-70", "不及格 0-60"]
+# 评分等级固定文本（4级制，与参考模板 XD26010006 一致）
+GRADE_LEVELS = ["优\n90-100", "良\n80-89", "中/及格\n60-79", "差\n0-59"]
 
 
 def add_run_songti(p, text, bold=False, size=Pt(10.5)):
-    """向段落添加 run 并显式设置宋体字体。
+    """向段落添加 run 并显式设置宋体字体（中文）+ Times New Roman（西文）。
 
     解决 p.clear() 后新 run 不继承模板字体的问题。
+    参考模板使用双字体体系：西文 Times New Roman，中文宋体。
     所有正文段落替换都应使用此函数而非 p.add_run()。
     """
     run = p.add_run(text)
     if bold:
         run.bold = True
-    run.font.name = FONT_NAME
+    run.font.name = WESTERN_FONT
     run.font.size = size
     r_elem = run.element.rPr
     if r_elem is not None:
