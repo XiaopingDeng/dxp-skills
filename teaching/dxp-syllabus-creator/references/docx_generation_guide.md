@@ -7,9 +7,13 @@
 2. [评分标准表替换规则](#2-评分标准表替换规则)
 3. [正文段落替换策略](#3-正文段落替换策略)
 4. [多章节段落插入方法](#4-多章节段落插入方法)
-5. [表格行数匹配](#5-表格行数匹配)
+5. [表格行数匹配与动态调整](#5-表格行数匹配与动态调整)
 6. [列宽调整](#6-列宽调整)
-7. [常见陷阱与解决方案](#7-常见陷阱与解决方案)
+7. [表格合并单元格处理（关键陷阱）](#7-表格合并单元格处理关键陷阱)
+8. [批注清理方法](#8-批注清理方法)
+9. [常见陷阱与解决方案](#9-常见陷阱与解决方案)
+10. [模板命名样式体系](#10-模板命名样式体系)
+11. [模板批注编制要求](#11-模板批注编制要求)
 
 ---
 
@@ -158,9 +162,20 @@ for i, p in enumerate(doc.paragraphs):
 
 ---
 
-## 5. 表格行数匹配
+## 5. 表格行数匹配与动态调整
 
-参考模板 `XD26010006 供配电与照明工程 课程教学大纲（2026版-参考模版）.docx` 含 10 个表格。填充数据时确保数据行数不超过表格可用行数：
+参考模板 `XD26010006 供配电与照明工程 课程教学大纲（2026版-参考模版）.docx` 含 10 个表格。填充数据时确保数据行数和课程目标数匹配：
+
+### 动态行数调整原则
+
+**当数据行数 < 模板行数**：用 `clear_excess_rows(table, start_row)` 清空多余行。
+
+**当数据行数 > 模板行数**（如课程目标数≠3导致评分表行数不足）：必须动态扩展。
+- 无合并单元格的表：直接 `add_row()` 复制最后一行样式再清空内容
+- 有合并单元格的表（如评分表4/7）：深拷贝最后数据行的XML（`copy.deepcopy(table.rows[-1]._element)`），用 `addnext()` 追加，然后更新合并标记
+- 扩展后更新表格总行数
+
+### 行数参考表
 
 | 表 | 总行数 | 表头行 | 可用数据行 | 常见内容 |
 |:---|:---:|:---:|:---:|:---|
@@ -216,7 +231,114 @@ Table 2 中"学时"列的值之和必须等于总学时。**关键规则**：讲
 
 ---
 
-## 7. 常见陷阱与解决方案
+## 7. 表格合并单元格处理（关键陷阱）
+
+### 问题背景
+模板中的多个表格使用了垂直合并（w:vMerge）和水平合并（w:gridSpan）。直接遍历 `table.rows[ri].cells` 时，被合并的"隐藏"单元格不会出现在 cells 数组中——迭代到这些列时 cells[index] 实际指向的是合并组的首个单元格，导致写入的数据被错误覆盖。
+
+### 受影响表格
+
+| 表 | 合并类型 | 具体位置 | 现象 |
+|:---|:---|:---|:---|
+| Table 3 平时作业 | vMerge | R1-R4 的 C0 先合并再拆分（2+2布局） | C0依次写"课程目标1/课程目标2"被覆盖 |
+| Table 8 期末考试 | vMerge | R1-R7 的 C0 合并为 3+3+1 三个组 | 只显示第一个写入值 |
+| Table 9 达成度 | gridSpan | R0 总表头合并 4 列、R5 毕业要求列合并 3 列 | 写入文本跨列显示为合并文本 |
+
+### 检测合并结构
+
+填充前先用以下逻辑检测表格的合并情况：
+
+```python
+def detect_merges(table):
+    """返回 vmerge 和 hmerge 的映射表"""
+    vmerge = {}  # {(ri,ci): 'continue'|'restart'}
+    hmerge = {}  # {(ri,ci): span_count}
+    for ri, row in enumerate(table.rows):
+        for ci, cell in enumerate(row.cells):
+            tc = cell._tc
+            tcPr = tc.find('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}tcPr')
+            if tcPr is not None:
+                vmerge_elem = tcPr.find('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}vMerge')
+                if vmerge_elem is not None:
+                    val = vmerge_elem.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val')
+                    vmerge[(ri, ci)] = val if val else 'restart'
+                gridSpan_elem = tcPr.find('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}gridSpan')
+                if gridSpan_elem is not None:
+                    hmerge[(ri, ci)] = int(gridSpan_elem.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val'))
+    return vmerge, hmerge
+```
+
+### 合并感知写入策略
+
+对受合并影响的表格（Table 3/8/9），不要用 `fill_table_from_data()`，改用 `fill_table_merge_aware()`：
+
+```python
+def fill_table_merge_aware(table, data_matrix, vmerge_map):
+    """按合并锚点写入——只写 vMerge='restart' 的锚点行"""
+    for ri, row_data in enumerate(data_matrix):
+        if ri >= len(table.rows):
+            break
+        # 对 vMerge 区域，只写 restart 行
+        for ci, val in enumerate(row_data):
+            if ci >= len(table.rows[ri].cells):
+                break
+            # 检查此单元格是否有 vMerge，且为 'continue' → 跳过
+            if (ri, ci) in vmerge_map and vmerge_map[(ri, ci)] == 'continue':
+                continue
+            set_cell_font(table.rows[ri].cells[ci], val)
+```
+
+---
+
+## 8. 批注清理方法
+
+模板中的批注在生成 docx 后必须彻底清除，否则会残留批注标记（页面右侧的红色批注框）。清理分两步：
+
+### Step 1: 删除正文中的批注引用标记
+
+```python
+def strip_comments_from_body(doc):
+    """删除文档正文中的所有批注引用元素"""
+    body = doc.element.body
+    ns = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
+    tags_to_remove = ['commentRangeStart', 'commentRangeEnd', 'commentReference']
+    for p in body.iter(f'{ns}p'):
+        for child in list(p):
+            tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
+            if tag in tags_to_remove:
+                p.remove(child)
+            elif tag == 'r':  # run 级别的 commentReference
+                for r_child in list(child):
+                    rt = r_child.tag.split('}')[-1] if '}' in r_child.tag else r_child.tag
+                    if rt == 'commentReference':
+                        child.remove(r_child)
+```
+
+### Step 2: 删除 comments.xml 部件
+
+```python
+def strip_comments_part(doc):
+    """删除 docx 包中的 comments.xml 以及相关关系"""
+    parts_to_drop = []
+    for rel in doc.part.rels.values():
+        if 'comment' in rel.reltype.lower():
+            parts_to_drop.append(rel)
+    for rel in parts_to_drop:
+        doc.part.drop_rel(rel.rId)
+```
+
+### 集成到生成流程
+
+在 `doc.save()` 之前调用两个函数：
+```python
+strip_comments_from_body(doc)
+strip_comments_part(doc)
+doc.save(output_path)
+```
+
+---
+
+## 9. 常见陷阱与解决方案
 
 ### 陷阱 1：正文段落替换覆盖了错误的段落
 
@@ -274,7 +396,7 @@ Table 2 中"学时"列的值之和必须等于总学时。**关键规则**：讲
 
 ---
 
-## 8. 模板命名样式体系
+## 10. 模板命名样式体系
 
 参考模板 `XD26010006 供配电与照明工程 课程教学大纲（2026版-参考模版）.docx` 使用命名样式（Named Styles）控制格式。替换内容时**必须保留段落原有样式名**，不可更改 `paragraph.style` 属性。
 
@@ -300,7 +422,7 @@ Table 2 中"学时"列的值之和必须等于总学时。**关键规则**：讲
 
 ---
 
-## 9. 模板批注编制要求
+## 11. 模板批注编制要求
 
 参考模板含 5 条批注，是编制方对大纲内容的具体要求。生成 docx 时不生成批注本身，但内容须遵循：
 

@@ -27,6 +27,16 @@ HEITI_FONT = '黑体'          # 标题中文字体
 FONT_SIZE = Pt(12)
 NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 
+# 文件名命名规范
+FILENAME_BRACKETS = {
+    'syllabus': ('（', '）'),  # 大纲用全角括号
+    'intro': ('(', ')'),        # 简介用半角括号
+}
+FILENAME_SUFFIX = {
+    'syllabus': '课程教学大纲',
+    'intro': '课程简介',
+}
+
 
 def _make_run(run, text, bold=False, size=None, font_name=None, east_asia=None):
     """统一设置 run 属性。
@@ -61,6 +71,22 @@ def _new_para_elem():
     return parse_xml(
         f'<w:p xmlns:w="{NS}"><w:r><w:rPr><w:rFonts w:ascii="{WESTERN_FONT}" w:eastAsia="{FONT_NAME}"/>'
         f'<w:sz w:val="24"/></w:rPr><w:t></w:t></w:r></w:p>')
+
+
+def generate_filename(code, name, doc_type='syllabus'):
+    """按命名规范生成标准文件名。
+
+    Args:
+        code: 课程编码（如 XD26040002）
+        name: 课程名称（如 通信原理（XD））
+        doc_type: 'syllabus' 或 'intro'
+
+    Returns:
+        标准文件名（如 "XD26040002 通信原理（XD） 课程教学大纲（26版）.docx"）
+    """
+    bracket_l, bracket_r = FILENAME_BRACKETS[doc_type]
+    suffix = FILENAME_SUFFIX[doc_type]
+    return f"{code} {name} {suffix}{bracket_l}26版{bracket_r}.docx"
 
 
 # ============================================================
@@ -406,7 +432,7 @@ FOOTER_KEYWORDS = ('编 写 人', '审 核 人', '批 准 人', '编写日期')
 GRADE_LEVELS = ["优\n90-100", "良\n80-89", "中/及格\n60-79", "差\n0-59"]
 
 
-def add_run_songti(p, text, bold=False, size=Pt(10.5)):
+def add_run_songti(p, text, bold=False, size=Pt(12)):
     """向段落添加 run 并显式设置宋体字体（中文）+ Times New Roman（西文）。
 
     解决 p.clear() 后新 run 不继承模板字体的问题。
@@ -530,15 +556,123 @@ def fill_table_from_data(table, data, align_map=None):
             set_cell_font(table.rows[ri].cells[ci], val, align=align)
 
 
-def clear_excess_rows(table, start_row):
-    """清空表格中从 start_row 开始的多余数据行。
+def ensure_table_row_count(table, needed_data_rows, header_rows=1):
+    """确保表格行数满足所需数据行数。
 
-    当课程目标数/作业次数少于模板行数时，
-    多余数据行的每个单元格必须清空，否则模板旧内容会残留。
+    比 clear_excess_rows 更完善的版本——既能清空多余行，也能动态增行。
+    适用于无合并单元格的简单表格。
+
+    Args:
+        table: python-docx Table 对象
+        needed_data_rows: 需要的数据行数
+        header_rows: 表头行数（默认1）
     """
-    for ri in range(start_row, len(table.rows)):
-        for ci in range(len(table.rows[ri].cells)):
-            table.rows[ri].cells[ci].text = ''
+    total_needed = header_rows + needed_data_rows
+    current_rows = len(table.rows)
+
+    if current_rows > total_needed:
+        # 清空多余行
+        for ri in range(total_needed, current_rows):
+            for ci in range(len(table.rows[ri].cells)):
+                table.rows[ri].cells[ci].text = ''
+    elif current_rows < total_needed:
+        # 深拷贝最后一行 XML，追加行
+        import copy
+        last_row_elem = copy.deepcopy(table.rows[-1]._element)
+        for _ in range(total_needed - current_rows):
+            new_row = copy.deepcopy(last_row_elem)
+            table._tbl.append(new_row)
+            # 重置 vMerge 标记为新行初始化
+            for tc in new_row.findall(f'{{{NS}}}tc'):
+                tcPr = tc.find(f'{{{NS}}}tcPr')
+                if tcPr is not None:
+                    vm = tcPr.find(f'{{{NS}}}vMerge')
+                    if vm is not None:
+                        tcPr.remove(vm)
+
+
+def detect_merges(table):
+    """检测表格的合并单元格结构。
+
+    返回:
+        vmerge: {(行,列): 'restart'|'continue'} — 垂直合并映射
+        hmerge: {(行,列): span_count} — 水平合并映射
+    """
+    vmerge = {}
+    hmerge = {}
+    for ri, row in enumerate(table.rows):
+        for ci, cell in enumerate(row.cells):
+            tc = cell._tc
+            tcPr = tc.find(f'{{{NS}}}tcPr')
+            if tcPr is not None:
+                vm = tcPr.find(f'{{{NS}}}vMerge')
+                if vm is not None:
+                    val = vm.get(f'{{{NS}}}val')
+                    vmerge[(ri, ci)] = val if val else 'restart'
+                gs = tcPr.find(f'{{{NS}}}gridSpan')
+                if gs is not None:
+                    hmerge[(ri, ci)] = int(gs.get(f'{{{NS}}}val'))
+    return vmerge, hmerge
+
+
+def fill_table_merge_aware(table, data_matrix, vmerge_map=None, align_map=None):
+    """合并感知的表格填充——只写入 vMerge='restart' 的锚点行。
+
+    对 Table 3/8/9 等有垂直合并的表格使用此函数代替 fill_table_from_data。
+
+    Args:
+        table: python-docx Table
+        data_matrix: 二维数组（含表头行 data[0]）
+        vmerge_map: detect_merges 返回的 vmerge 字典
+        align_map: {col_idx: alignment}
+    """
+    if vmerge_map is None:
+        vmerge_map = {}
+    if align_map is None:
+        align_map = {}
+    for ri, row_data in enumerate(data_matrix):
+        if ri >= len(table.rows):
+            break
+        for ci, val in enumerate(row_data):
+            if ci >= len(table.rows[ri].cells):
+                break
+            # 跳过垂直合并的 continue 行（非锚点）
+            if (ri, ci) in vmerge_map and vmerge_map[(ri, ci)] == 'continue':
+                continue
+            align = align_map.get(ci, WD_ALIGN_PARAGRAPH.CENTER)
+            set_cell_font(table.rows[ri].cells[ci], val, align=align)
+
+
+def strip_comments_from_body(doc):
+    """删除文档正文中所有批注引用标记（commentRangeStart/End/Reference）。
+
+    必须在 doc.save() 前调用，确保生成的 docx 不含批注。
+    """
+    body = doc.element.body
+    tags_para = ['commentRangeStart', 'commentRangeEnd', 'commentReference']
+    for p in body.iter(f'{{{NS}}}p'):
+        for child in list(p):
+            tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
+            if tag in tags_para:
+                p.remove(child)
+            elif tag == 'r':
+                for r_child in list(child):
+                    rt = r_child.tag.split('}')[-1] if '}' in r_child.tag else r_child.tag
+                    if rt == 'commentReference':
+                        child.remove(r_child)
+
+
+def strip_comments_part(doc):
+    """删除 docx 包中的 comments.xml 部件及其关系。
+
+    与 strip_comments_from_body 配合使用，彻底清除批注。
+    """
+    parts_to_drop = []
+    for rel in doc.part.rels.values():
+        if 'comment' in rel.reltype.lower():
+            parts_to_drop.append(rel)
+    for rel in parts_to_drop:
+        doc.part.drop_rel(rel.rId)
 
 
 def replace_section_body(doc, heading_keyword, body_text):
