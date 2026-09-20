@@ -1,0 +1,73 @@
+{
+  "title": "关于你投稿稿件的修改意见",
+  "meta": [
+    "论文：Joint Task Offloading and 3D Trajectory Planning in Multiple UAV Assisted Edge Computing Networks",
+    "稿件：article.pdf（13 页，Springer sn-jnl 模板）｜作者：Lujuan Ma, Wenxiao Bai, Xiaoping Deng, Leidong Shang, Jianlin Zhou",
+    "日期：2026 年 9 月 20 日"
+  ],
+  "note": "说明：每一条问题后面我都用红字写了怎么改，你照着一条条过。",
+  "tone": "mentor",
+  "blocks": [
+    { "type": "h1", "text": "你这篇的整体思路（我先复述一遍）" },
+    { "type": "p", "text": "你这篇做的是城区受限空域里的多机任务服务与三维航迹规划：M 架 UAV 各自服务一组固定的地面 UE，要在有限步数内从地图下部的起点飞到上部的终点。核心矛盾是——靠 UE 近，服务就好，但绕行会吃掉航时、还可能到不了终点，加上建筑挡路，可行路径被压得更窄。你把问题写成了有限时域约束马尔可夫决策过程：策略每步只输出两个连续量（航向增量 u_t 和垂直控制 w_t），撞楼、出界交给环境拒绝（算转移动力学，不算动作空间），UE 一进通信半径就自动上传。目标拆成三路信号——任务奖励 r、约束代价 c、覆盖信号 g；CCSAC 每一路各配一对 critic，所有 UAV 共用一个随机 actor 和一个回放池；覆盖权重 w 随剩余距离衰减，代价权重用自适应 Lagrange 乘子按归一化代价阈值调节。最后在同一城区仿真器里，用成功率、回报、success-aware 步数、覆盖率、转向代价五个指标，跟 DQN、DDPG、原始 SAC、TD3 比了 30 个 episode。" },
+    { "type": "bullets", "items": [
+      "场景与矛盾：M 机各服务固定 UE；越靠近服务越好，但绕行费时、障碍挡路，还得保证到终点。",
+      "问题建模：有限时域 CMDP；动作 =（航向增量, 垂直控制）；避障归环境；进通信半径就自动上传。",
+      "目标分解：任务奖励 r + 约束代价 c + 覆盖信号 g，三路分开。",
+      "方法 CCSAC：三对 critic + 一个共享随机 actor + 共享 replay buffer；覆盖权重随距离衰减；Lagrange 乘子自适应调代价。",
+      "评测设计：500×500×100 城区、3 机、每机 10 UE；对比 DQN/DDPG/SAC/TD3；五项指标；30 episodes。"
+    ] },
+
+    { "type": "h1", "text": "一、最要紧的问题（这几条先解决）" },
+
+    { "type": "issue",
+      "heading": "1. 标题和正文对不上（这条最要紧）",
+      "paras": [
+        "你的标题是 “Joint Task Offloading and 3D Trajectory Planning in Multiple UAV Assisted Edge Computing Networks”，关键词里也写了 task offloading。但正文里你自己写了三处相反的话："
+      ],
+      "bullets": [
+        "§1：“The action space has no separate binary execution mode.”",
+        "§2.2：“The action has no separate task execution mode.”",
+        "Remark 1：“A task has no learned binary execution choice. Reception within range triggers onboard processing.”"
+      ],
+      "suggest": [
+        "给你两条路，你自己挑。方案 A（省事，我推荐）：标题改成 “3D Trajectory Planning for Task Service in Multi-UAV Edge Computing Networks”，关键词把 task offloading 换成 task service，摘要和引言里所有 “joint task offloading” 的说法一并改掉。方案 B（工作量大，但更贴原题）：动作空间里真的加一个卸载决策，比如部分卸载比例 a_t^off ∈ [0,1]，或者离散的 {local, edge}，状态、奖励、代价都跟着扩一下，“joint” 就名副其实了。",
+        "提醒一句：走方案 A 的话，摘要、引言、结论里凡是“联合优化”的措辞都要一起清干净。"
+      ] },
+
+    { "type": "issue",
+      "heading": "2. 几个关键数字对不上（这个一定要核）",
+      "paras": [
+        "你把表 1、式 (1) 和 §5.1 摆到一起就能看出问题。算一下：最大位移 = 1.0 × 150 = 150 units；可起点到终点的最小直线距离（取 (210,80) → (330,420)）就有 √(120² + 340²) ≈ 360 units。",
+        "150 < 360，照你给的参数，成功在物理上根本不可能；可结果里写着 78.89% 成功率、平均 39.81 步就成功了。倒推一下：40 步走完 360–500 units，速度得有 9–12 unit/step，跟表 1 差了十倍。"
+      ],
+      "suggest": [
+        "先把一套自洽的参数定下来，再重跑实验。以式 (1) p_{t+1} = p_t + v_t 为准，两条路选一条：① 步数上限保持 150，那就把空域缩到 60×60×20 左右，或者把起终点距离压到 150 units 以内；② 空域保持 500×500×100，那就把速度改成 9–12 unit/step，或者把 episode 上限提到 700 步左右。",
+        "改完记得同步：表 1 加一行“单 episode 最大航程 = V_max × T”，让评审自己能验算；然后表 2、表 3 和那 8 张结果图全部重跑重画。"
+      ] },
+
+    { "type": "issue",
+      "heading": "3. 缺消融、缺多种子——你的方法贡献现在没法归因",
+      "paras": [
+        "这一点你自己在 §5.2 也承认了：“The study does not include component ablations or independent training seeds.”",
+        "问题是，CCSAC 相对 SAC 一口气改了三样东西：① 加 cost critic；② 加 coverage critic；③ distance-dependent 权重加参数共享。不做消融，你说不清到底是哪一项起了作用。这是方法类论文的硬要求，不能推到 future work。"
+      ],
+      "suggest": [
+        "补 4 组消融：① 完整 CCSAC；② 去掉 cost critic；③ 去掉 coverage critic；④ 去掉 distance-dependent 权重。每组用 3–5 个随机种子各训一遍，结果报 mean ± std，并做配对检验（Wilcoxon signed-rank 或 bootstrap 95% CI），表里标上显著性。"
+      ] },
+
+    { "type": "h1", "text": "五、咱们的修改顺序（按先后排）" },
+    { "type": "table",
+      "widths": [1000, 5126, 2900],
+      "header": ["优先级", "动作", "目的"],
+      "rows": [
+        ["P0", "改标题/关键词，或补上真正的卸载决策", "消除标题-内容矛盾"],
+        ["P0", "核对并统一速度、空域尺度、步数上限与成功步数", "消除量纲矛盾"],
+        ["P0", "补 reward / cost 完整公式与系数", "保证可复现"],
+        ["P0", "补消融 + 3–5 个训练种子", "使方法贡献可归因"]
+      ] },
+
+    { "type": "h1", "text": "最后交代几句" },
+    { "type": "p", "text": "总的看，你这篇的底子是有的——题目选得好、模型写得清楚、局限也认得清，缺的是“证据”和“打磨”。先按 P0 那四条来。改的过程中卡住了随时找我，咱们一条条过。" }
+  ]
+}
