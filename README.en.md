@@ -1,6 +1,6 @@
 # dxp-skills
 
-A personal Skills repository covering thesis review, code development, teaching, and research scenarios. **Opencode** (open ecosystem, native Windows support) is recommended as the driver; model priority: **GLM-5.2** (primary) → **DeepSeek-V4-Pro** → Opencode's built-in limited free models (e.g., `big pickle`, `deepseek-v4-flash`).
+A personal Skills repository covering thesis review, code development, teaching, and research scenarios. **Opencode** (open ecosystem, native Windows support) is recommended as the driver; model priority: **DeepSeek-V4-Flash** (primary).
 
 ## Table of Contents
 
@@ -15,6 +15,8 @@ A personal Skills repository covering thesis review, code development, teaching,
 - [Using Skills](#using-skills)
    - [dxp-thesis-reviewer Usage](#dxp-thesis-reviewer-usage)
    - [dxp-syllabus-creator Usage](#dxp-syllabus-creator-usage)
+   - [dxp-paper-reviewer Usage](#dxp-paper-reviewer-usage)
+   - [resume-doc-to-personal-homepage Usage](#resume-doc-to-personal-homepage-usage)
    - [Customization](#customization)
    - [Skills Management & Removal](#skills-management--removal)
 - [Repository Structure](#repository-structure)
@@ -29,6 +31,8 @@ A personal Skills repository covering thesis review, code development, teaching,
 |-------|----------|-------------|
 | **dxp-thesis-reviewer** | `teaching/` | Undergrad thesis review & annotation (v2.1): auto health-check + 3-level comment density + AI hallucination term detection + OOXML annotation + defense Q&A reference document generation, supports .doc/.docx |
 | **dxp-syllabus-creator** | `teaching/` | University course syllabus/outline intelligent generator (aligned with the 2026 training plan): auto-detects one of 4 template types (theory / course design / internship / graduation thesis); theory courses use a sample syllabus with a complete grading rubric as the template, replacing content to produce .docx plus a companion course-introduction document; the other three types are filled from their respective templates — outputs compliant .docx |
+| **dxp-paper-reviewer** | `researching/` | Submission paper health check (v1.0): systematic cross-audit across four ledgers (claims vs. delivery / numbers / units / symbols) + five-dimension review (attribution / reproducibility / baselines / presentation), outputting a severity-tiered numbered issue list (P0 fatal / P1·P2 soft) with an actionable fix per item; optional Word export (reviewer / advisor voices), accepts .pdf/.docx |
+| **resume-doc-to-personal-homepage** | `researching/` | Resume document (.doc/.docx/.wps) → deployable GitHub Pages personal homepage: a self-contained static site (index.html + styles.css + images/ + files/cv.pdf), optional one-click Chinese/English toggle, per-width numeric overflow verification, privacy-by-default (phone number / group photos not published) |
 
 More skills are in development. Categories:
 
@@ -38,7 +42,7 @@ More skills are in development. Categories:
 
 ## Environment Setup
 
-> 🚀 This guide is tailored for **Windows 11**. **Opencode** is recommended (open ecosystem, native Windows support); model priority: **GLM-5.2** (primary) → **DeepSeek-V4-Pro** → Opencode's built-in limited free models. See Step 3.
+> 🚀 This guide is tailored for **Windows 11**. **Opencode** is recommended (open ecosystem, native Windows support); model priority: **DeepSeek-V4-Flash** (primary, built-in & free) → **DeepSeek-V4-Pro** → **GLM-5.2**. See Step 3.
 
 ### Prerequisites
 
@@ -48,7 +52,7 @@ More skills are in development. Categories:
 | Node.js | ≥ 18.0.0 | LTS version recommended |
 | Python | ≥ 3.10 | Runtime for skill scripts |
 | Git | ≥ 2.40 | Optional |
-| Model API Key | GLM-5.2 (primary) / DeepSeek (secondary), either one | See Step 3; Opencode's built-in free models need no key |
+| Model API Key | DeepSeek-V4-Flash (primary) need keys | See Step 3; Opencode's built-in free models need no key |
 
 ### Step 1: Install Node.js & npm
 
@@ -69,7 +73,7 @@ npm config set registry https://registry.npmmirror.com
 
 ### Install Python (Required by Skill Scripts)
 
-> ⚠️ **Important**: The scripts bundled with `dxp-thesis-reviewer` and `dxp-syllabus-creator` require a Python runtime. Install Python before using these skills.
+> ⚠️ **Important**: Most skills rely on a Python runtime (`dxp-thesis-reviewer` and `dxp-syllabus-creator` core scripts, `dxp-paper-reviewer` full-text extraction, `resume-doc-to-personal-homepage` file & image handling). Install Python before using these skills.
 
 1. Visit [python.org](https://www.python.org/downloads/) and download Python 3.10+ (`.exe`)
 2. Run the installer — **make sure to check** `Add python.exe to PATH`
@@ -83,13 +87,17 @@ pip --version      # Should output a pip version number
 4. Install required Python packages:
 
 ```bash
-pip install python-docx pywin32
+pip install python-docx pywin32 pymupdf pillow
 ```
 
 | Package | Purpose | Used By |
 |---------|---------|---------|
-| `python-docx` | Generate/manipulate .docx files | dxp-thesis-reviewer, dxp-syllabus-creator |
+| `python-docx` | Generate/manipulate .docx files | dxp-thesis-reviewer, dxp-syllabus-creator, dxp-paper-reviewer |
 | `pywin32` | .doc → .docx conversion (Word COM automation) | dxp-thesis-reviewer |
+| `pymupdf` (fitz) | Extract plain text from PDF files | dxp-paper-reviewer |
+| `pillow` | Image processing (resume photo crop/resize, screenshot scan) | resume-doc-to-personal-homepage |
+
+> 💡 **Node dependency**: `dxp-paper-reviewer` needs the node `docx` package to export a Word issue list: `npm i -g docx` (the script handles a global node_modules; if `require("docx")` fails, set `NODE_PATH` — see the troubleshooting table).
 
 > 💡 **Tip**: If `pip` is not recognized, verify that you checked "Add python.exe to PATH" during installation. You can re-run the installer and choose "Modify" to add it.
 
@@ -131,7 +139,7 @@ Verify installation:
 opencode --version
 ```
 
-> 💡 **Zero-cost start**: Run `opencode` right after installation — the built-in limited free models (e.g., `big pickle`, `deepseek-v4-flash`) work without any API Key! For stronger models, follow Step 3 to connect `glm-5.2` or `deepseek-v4-pro`.
+> 💡 **Zero-cost start**: Run `opencode` right after installation — the built-in limited free models (incl. the primary `deepseek-v4-flash`) work without any API Key! For stronger models, follow Step 3 to connect `deepseek-v4-pro` or `glm-5.2`.
 
 ### Step 3: Configure Models
 
@@ -139,11 +147,11 @@ Recommended model priority (highest first):
 
 | Priority | Model | Notes | How to obtain |
 |:---:|:---|:---|:---|
-| 1 | `glm-5.2` | Primary, long context, Chinese-friendly | See the [GLM API docs](https://open.bigmodel.cn/dev/api); add as an OpenAI-compatible provider in Opencode |
-| 2 | `deepseek-v4-pro` | Secondary, 1.6T expert mode | Get an API Key from the [DeepSeek Platform](https://platform.deepseek.com/) |
-| 3 | Opencode built-in limited free models | e.g., `big pickle`, `deepseek-v4-flash` | No configuration needed, ready out of the box |
+| 1 | `deepseek-v4-flash` | **Primary**, fast mode, Chinese-friendly |  bring your own key via the [DeepSeek Platform](https://platform.deepseek.com/) |
+| 2 | `deepseek-v4-pro` | Secondary, 1.6T expert mode, stronger deep reasoning | Get an API Key from the [DeepSeek Platform](https://platform.deepseek.com/) |
+| 3 | `glm-5.2` | Alternative, long context, Chinese-friendly | See the [GLM API docs](https://open.bigmodel.cn/dev/api); add as an OpenAI-compatible provider in Opencode |
 
-> 💡 **How to connect**: Select a configured model via `/model` in Opencode; the built-in free models need no API Key. For each model's Base URL / API Key and other parameters, refer to its official API docs (GLM-5.2 via the link above, DeepSeek via its platform).
+> 💡 **How to connect**: Select a configured model via `/model` in Opencode. The primary `deepseek-v4-flash` is a built-in free model and needs no API Key. For each model's Base URL / API Key and other parameters, refer to its official API docs (DeepSeek via its platform, GLM-5.2 via the link above).
 
 ### Step 4: Install & Register Skills
 
@@ -156,6 +164,8 @@ npx skills add .
 # Or register a single skill
 npx skills add ./teaching/dxp-thesis-reviewer
 npx skills add ./teaching/dxp-syllabus-creator
+npx skills add ./researching/dxp-paper-reviewer
+npx skills add ./researching/resume-doc-to-personal-homepage
 ```
 
 List registered skills:
@@ -168,7 +178,7 @@ npx skills list
 
 ## Using Skills
 
-In the Opencode interface, first run `/model` to select a model (`glm-5.2` / `deepseek-v4-pro` / a built-in free model all work), then trigger a skill via `/skill-name` or natural language. Usage for each skill is described separately below.
+In the Opencode interface, first run `/model` to select a model (the primary `deepseek-v4-flash` is recommended; `deepseek-v4-pro` / `glm-5.2` also work), then trigger a skill via `/skill-name` or natural language. Usage for each skill is described separately below.
 
 ### dxp-thesis-reviewer Usage
 
@@ -181,7 +191,7 @@ Undergraduate thesis review & annotation; produces a reviewed Word document with
 opencode
 ```
 
-3. Inside the interactive interface, run `/model` and select a model (recommend `glm-5.2`)
+3. Inside the interactive interface, run `/model` and select a model (recommend `deepseek-v4-flash`)
 4. Trigger the skill (slash command + TAB autocomplete, or natural language):
 
 ```bash
@@ -202,7 +212,7 @@ University course syllabus generator; auto-detects the course type, matches one 
 opencode
 ```
 
-4. Inside the interactive interface, run `/model` and select a model (recommend `glm-5.2`)
+4. Inside the interactive interface, run `/model` and select a model (recommend `deepseek-v4-flash`)
 5. Trigger the skill (slash command + TAB autocomplete, or natural language):
 
 ```bash
@@ -212,6 +222,54 @@ opencode
 6. The skill first confirms the textbook and assessment weights, then generates the syllabus; multiple authorizations are required, and a compliant .docx syllabus is output in the working directory
 
 > 💡 The training plan should include the engineering-accreditation matrix between graduation-requirement indicators and courses. If you have a separate engineering-accreditation matrix xlsx, place it in the working directory too — the skill will preferentially extract fine-grained indicators from it.
+
+### dxp-paper-reviewer Usage
+
+Submission paper health check: systematically cross-audits a manuscript (four ledgers — claims vs. delivery / numbers & units / symbols — plus the five-dimension review of attribution / reproducibility / baselines / presentation) and outputs a severity-tiered numbered issue list (P0 fatal / P1·P2 soft) with an actionable fix for each item.
+
+1. **Create a new folder as the working directory** and place the manuscript to check (supports .pdf / .docx) into it
+2. Open a terminal in that folder: in File Explorer, click the address bar, type `cmd` and press Enter, then:
+
+```cmd
+opencode
+```
+
+3. Inside the interactive interface, run `/model` and select a model (recommend `deepseek-v4-flash`)
+4. Trigger the skill (slash command + TAB autocomplete, or natural language):
+
+```bash
+/dxp-paper-reviewer Review article.pdf in this folder
+```
+
+5. The default full check outputs a tiered issue list; ask for a Word export (reviewer / advisor voice) when you need a document:
+
+```bash
+/dxp-paper-reviewer Review article.pdf and export the issue list as a Word doc in the reviewer voice
+```
+
+> 💡 Single-dimension queries are supported — e.g., "only check the statistics" or "focus on baseline fairness" — the skill jumps straight to that dimension. Word export requires `npm i -g docx` (see the Node dependency note under "Install Python").
+
+### resume-doc-to-personal-homepage Usage
+
+Turns a resume document into a deployable GitHub Pages personal homepage (self-contained static site: index.html + styles.css + images/ + files/cv.pdf, with an optional one-click Chinese/English toggle).
+
+1. **Create a new folder as the working directory** and place the resume into it (supports .doc / .docx / .wps; no resume at hand? fill in the skill's bundled `resume-template.docx`)
+2. Open a terminal in that folder: in File Explorer, click the address bar, type `cmd` and press Enter, then:
+
+```cmd
+opencode
+```
+
+3. Inside the interactive interface, run `/model` and select a model (recommend `deepseek-v4-flash`), then trigger the skill (slash command + TAB autocomplete, or natural language):
+
+```bash
+/resume-doc-to-personal-homepage Turn this resume.docx into my personal homepage and deploy it to GitHub Pages
+```
+
+4. Optionally provide a reference homepage URL (the skill reproduces its layout system, never its content); mention it if you want a Chinese/English toggle
+5. After building and verifying the site at every tested width (zero horizontal overflow), the skill delivers a `homepage/` folder + deployment instructions (`<username>.github.io` or a project repo + Settings → Pages); it omits phone numbers, group photos, etc. by default — uncomment them if you really want them published
+
+> 💡 Reading the resume relies on the local Office / document-reading toolchain (lark-cli doc tools) — follow the authorization prompts on first run; render verification needs Chrome on this machine.
 
 ### Customization
 
@@ -235,6 +293,8 @@ Remove a skill:
 ```bash
 npx skills remove dxp-thesis-reviewer
 npx skills remove dxp-syllabus-creator
+npx skills remove dxp-paper-reviewer
+npx skills remove resume-doc-to-personal-homepage
 ```
 
 ## Repository Structure
@@ -275,6 +335,27 @@ dxp-skills/
 │       ├── 附件2：课程简介模板.doc   # Course-intro structure reference
 │       ├── 附件4：实验项目汇总表.xlsx # Lab project summary reference
 │       └── eval_set.json            # Evaluation dataset
+├── researching/                     # Research-related skills
+│   ├── dxp-paper-reviewer/          # Submission paper health check
+│   │   ├── SKILL.md                 # Skill definition
+│   │   ├── scripts/
+│   │   │   ├── extract_manuscript.py # PDF/DOCX full-text extraction (with metadata)
+│   │   │   └── build_review_docx.js  # Issue-list JSON → Word export
+│   │   ├── references/
+│   │   │   └── docx-export.md        # Word export rules (reviewer/advisor voices)
+│   │   └── assets/
+│   │       └── example_review.json   # Sample issue list
+│   └── resume-doc-to-personal-homepage/ # Resume → GitHub Pages personal homepage
+│       ├── SKILL.md                 # Skill definition
+│       ├── references/
+│       │   ├── reading-the-doc.md   # Reading the resume (extension routing/handshake/polling)
+│       │   ├── building-the-site.md # Building the site (design tokens/photo component)
+│       │   ├── verifying-render.md  # Render verification (numeric overflow probe/tall shots)
+│       │   ├── shipping-pages.md    # GitHub Pages deployment (HTTPS + PAT recipe)
+│       │   ├── bilingual.md         # Chinese/English toggle implementation
+│       │   └── windows-gotchas.md   # Windows environment trap lookup table
+│       └── assets/
+│           └── resume-template.docx # Resume template (fill in when no resume at hand)
 ├── .gitignore
 ├── LICENSE
 ├── README.md
@@ -295,6 +376,9 @@ dxp-skills/
 | Opencode can't connect to free model | Network restrictions | Ensure terminal has internet access; or set proxy `set HTTPS_PROXY=http://127.0.0.1:7890` |
 | dxp-syllabus-creator can't find training plan | No training plan .docx in the working directory | Place a training plan containing engineering-accreditation support relationships into the working directory before running the skill |
 | dxp-thesis-reviewer can't recognize the thesis | The thesis is a PDF or not placed in the working directory | Only .doc/.docx are supported; place the thesis into the working directory before running |
+| dxp-paper-reviewer Word export fails with `Cannot find module 'docx'` | The node `docx` package is missing or unresolved | Run `npm i -g docx`; if it still fails, set `$env:NODE_PATH="$(npm root -g)"` and re-run |
+| dxp-paper-reviewer PDF extraction fails with `ModuleNotFoundError` | Missing PDF parsing library | Run `pip install pymupdf` (or pdfplumber / pypdf) |
+| resume-doc-to-personal-homepage reading .wps/.dot reports `Unknown sheet tool` | Extension mis-routed to the sheet category | Copy the file and save the copy as .doc before reading (never modify the original) |
 
 ## Contributing
 
@@ -307,8 +391,8 @@ dxp-skills/
 
 - [Opencode Official Website](https://opencode.ai) — Open-source AI coding assistant with free models
 - [Opencode GitHub](https://github.com/anomalyco/opencode) — 160K+ Stars, active community
-- [GLM API Docs](https://open.bigmodel.cn/dev/api) — Primary model GLM-5.2 integration guide
-- [DeepSeek Platform](https://platform.deepseek.com/) — Secondary model deepseek-v4-pro integration platform
+- [DeepSeek Platform](https://platform.deepseek.com/) — Primary model deepseek-v4-flash and expert-mode deepseek-v4-pro integration platform
+- [GLM API Docs](https://open.bigmodel.cn/dev/api) — Alternative model GLM-5.2 integration guide
 
 ## License
 
