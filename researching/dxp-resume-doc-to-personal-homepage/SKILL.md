@@ -1,5 +1,5 @@
 ---
-name: resume-doc-to-personal-homepage
+name: dxp-resume-doc-to-personal-homepage
 description: "Turn a resume/CV document (.doc / .docx / .wps) into a deployable GitHub Pages personal homepage — a self-contained static site (index.html + styles.css + images/ + files/cv.pdf). Triggers: 个人主页 / 个人网站 / 学术主页 / GitHub Pages 主页 built from a resume; restyling an existing resume as a web page; matching the layout of a reference academic homepage URL; adding a second language with a 中英文切换 toggle to an existing homepage. Not for editing the resume document itself, and not for a multi-page site with a backend."
 agent_created: true
 ---
